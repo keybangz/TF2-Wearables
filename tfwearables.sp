@@ -4,11 +4,12 @@
 #include <tf2attributes>
 #include <morecolors>
 #include <clientprefs>
+#include <tf_econ_data>
 
 #pragma newdecls required // Force Transitional Syntax
 #pragma semicolon 1 // Force Semicolon, should use in every plugin.
 
-#define PLUGIN_VERSION "1.1.0"
+#define PLUGIN_VERSION "2.0.0"
 
 int g_Ent[MAXPLAYERS + 1];
 int g_WepEnt[MAXPLAYERS + 1];
@@ -26,9 +27,11 @@ bool iMeleeSlotSheenChosen[MAXPLAYERS + 1];
 bool iMeleeSlotTiersChosen[MAXPLAYERS + 1];
 bool iMeleeSlotEffectsChosen[MAXPLAYERS + 1];
 
-bool bNeedsWarPaint[MAXPLAYERS + 1];
+int iPrimarySlotUnusualWeaponChosen[MAXPLAYERS+1];
+int iSecondarySlotUnusualWeaponChosen[MAXPLAYERS+1];
+int iMeleeSlotUnusualWeaponChosen[MAXPLAYERS+1];
 
-ConVar g_bLogToConsole;
+bool bNeedsWarPaint[MAXPLAYERS + 1];
 
 // Wearables menu
 
@@ -43,8 +46,6 @@ ConVar g_bLogToConsole;
 #define iUNUSUALTAUNTS 2
 #define iAUSTRALIUMS 3
 #define iWARPAINTS 4
-
-
 
 // Killstreaks Menu
 
@@ -71,7 +72,6 @@ float KillstreakSheenID[MAXPLAYERS + 1];
 // Unusual Taunts Menu
 char UnusualTauntID[MAXPLAYERS + 1][64];
 float WeaponUnusualID[MAXPLAYERS + 1];
-char strWeaponUnusual[MAXPLAYERS + 1][64];
 bool HasPickedUnusualTaunt[MAXPLAYERS + 1];
 bool HasPickedWeaponUnusual[MAXPLAYERS + 1];
 //Handle CheckTaunt[MAXPLAYERS + 1];
@@ -85,9 +85,9 @@ Handle RefireRoaringRockets[MAXPLAYERS + 1];
 // COOOKIESS!!!!
 
 Handle UnusualTauntCookie = null;
-Handle UnusualWeaponCookie = null;
-Handle UnusualWeaponFloatCookie = null;
-Handle UnusualWeaponBoolCookie = null;
+Handle PrimaryUnusualWeaponCookie = null;
+Handle SecondaryUnusualWeaponCookie = null;
+Handle MeleeUnusualWeaponCookie = null;
 Handle PrimaryKillstreakTierCookie = null;
 Handle PrimaryKillstreakSheenCookie = null;
 Handle PrimaryKillstreakEffectCookie = null;
@@ -101,9 +101,11 @@ Handle MeleeKillstreakEffectCookie = null;
 // ConVars
 
 ConVar RegeneratePlayer;
+ConVar g_cServerLogging;
+ConVar g_cJailbreakCompat;
 
 // Thanks 404
-int g_iPaintKitable[][] =  {
+public const int g_iPaintKitable[45] =  {
 	37,  // Ubersaw
 	172,  // Scotsman's Skullcutter
 	194,  // Knife (Strange/Renamed)
@@ -148,17 +150,17 @@ int g_iPaintKitable[][] =  {
 	1104,  // Air Strike
 	1151,  // Iron Bomber
 	1153,  // Panic Attack
-	1178,  // Dragon's Fury
+	1178  // Dragon's Fury
 };
 
 // This is pretty self explanatory.
 public Plugin myinfo = 
 {
 	name = "[TF2] Wearables", 
-	author = "blood", 
+	author = "cigzag", 
 	description = "Allows players to use a menu to pick custom attributes for there weapons or player.", 
 	version = PLUGIN_VERSION, 
-	url = "https://sanctuary.tf", 
+	url = "", 
 };
 
 public void OnPluginStart()
@@ -166,13 +168,14 @@ public void OnPluginStart()
 	// ConVars
 	CreateConVar("tf_wearables_version", PLUGIN_VERSION, "Wearables Version (Do not touch).", FCVAR_NOTIFY | FCVAR_REPLICATED);
 	RegeneratePlayer = CreateConVar("sm_wearables_rg", "0", "Regenerate player on wearable update?", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	g_bLogToConsole = CreateConVar("sm_wearables_log", "0", "Log the given killstreak id's to console'", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_cServerLogging = CreateConVar("sm_wearables_logging", "0", "Log debug outputs to server console?", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	g_cJailbreakCompat = CreateConVar("sm_wearables_jb", "0", "Add specific checks to ensure no interference with Scag's TF2 Jailbreak plugin.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	
 	// These cookies are stale, gross.
 	UnusualTauntCookie = RegClientCookie("UnusualTauntID", "A cookie for reading the saved Unusual Taunt ID", CookieAccess_Private); // Make a client cookie, make sure cookie cannot be written over by client, by making it private.
-	UnusualWeaponCookie = RegClientCookie("WeaponUnusualID", "A cookie for reading the saved Unusual Weapon ID", CookieAccess_Private);
-	UnusualWeaponFloatCookie = RegClientCookie("WeaponUnusualIDFloat", "A cookie for reading the saved Unusual Weapon ID Float", CookieAccess_Private);
-	UnusualWeaponBoolCookie = RegClientCookie("WeaponUnusualIDBool", "A cookie for reading the saved Unusual Weapon ID Bool", CookieAccess_Private);
+	PrimaryUnusualWeaponCookie = RegClientCookie("PrimaryWeaponUnusualID", "A cookie for reading the saved Unusual Weapon ID", CookieAccess_Private);
+	SecondaryUnusualWeaponCookie = RegClientCookie("SecondaryWeaponUnusualID", "A cookie for reading the saved Unusual Weapon ID", CookieAccess_Private);
+	MeleeUnusualWeaponCookie = RegClientCookie("MeleeWeaponUnusualID", "A cookie for reading the saved Unusual Weapon ID", CookieAccess_Private);
 	PrimaryKillstreakTierCookie = RegClientCookie("PrimaryKillstreakTier", "A cookie for reading the saved Killstreak Cookie", CookieAccess_Private);
 	PrimaryKillstreakSheenCookie = RegClientCookie("PrimaryKillstreakSheen", "A cookie for reading the saved Killstreak Sheen", CookieAccess_Private);
 	PrimaryKillstreakEffectCookie = RegClientCookie("PrimaryKillstreakEffect", "A cookie for reading the saved Killstreak Effect", CookieAccess_Private);
@@ -184,13 +187,12 @@ public void OnPluginStart()
 	MeleeKillstreakEffectCookie = RegClientCookie("MeleeKillstreakEffect", "A cookie for reading the saved Killstreak Effect", CookieAccess_Private);
 	
 	// Hooks
-	HookEvent("player_spawn", PlayerSpawn, EventHookMode_Post);
 	HookEvent("player_death", PlayerDeath, EventHookMode_Pre);
 	HookEvent("post_inventory_application", OnResupply);
 	
 	// Admin Commands
 	RegAdminCmd("sm_wearables", WearablesMenu, ADMFLAG_RESERVATION, "Shows the wearables menu.");
-	//RegAdminCmd("sm_warpaint", WarPaintTest, ADMFLAG_RESERVATION, "Tests warpaints");
+	RegAdminCmd("sm_warpaint", WarPaintTest, ADMFLAG_RESERVATION, "Tests warpaints");
 	
 	// Player Commands
 	
@@ -209,7 +211,7 @@ public Action WearablesMenu(int client, int args)
 	menu.AddItem(UNUSUALS, "Weapon Unusuals");
 	menu.AddItem(UNUSUALTAUNTS, "Unusual Taunts");
 	menu.AddItem(AUSTRALIUMS, "Item Attributes");
-	//menu.AddItem(WARPAINTS, "War Paints");
+	menu.AddItem(WARPAINTS, "War Paints");
 	
 	menu.ExitButton = true;
 	menu.Display(client, MENU_TIME_FOREVER);
@@ -217,33 +219,57 @@ public Action WearablesMenu(int client, int args)
 	return Plugin_Handled; // Return Plugin_Handled to prevent "unknown command issues."
 }
 
-/*public Action WarPaintTest(int client, int args)
+public Action WarPaintTest(int client, int args)
 {
-	static const float WEAR_LEVELS[] = {
-		0.200, 0.400, 0.600, 0.800, 1.00
-	};
-	
+	//static const float WEAR_LEVELS[] = {
+//		0.200, 0.400, 0.600, 0.800, 1.00
+//	};
+
+	if(!IsClientInGame(client) || !IsPlayerAlive(client))
+		return Plugin_Handled;
+
+	if(args < 2)
+	{
+		ReplyToCommand(client, "[SM] Usage: sm_warpaint <warpaint> <unusual id>");
+		return Plugin_Handled;
+	}
+
+	char arg1[32];
+	GetCmdArg(1, arg1, sizeof(arg1));
+
+	char arg2[32];
+	GetCmdArg(2, arg2, sizeof(arg2));
+
 	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	
-	int hOwnerEntity = GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity");
-	//SetEntProp(weapon, Prop_Send, "m_iEntityQuality", TF2ItemQuality_Rarity2);
-	int itemid = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
-	int itemidlow = GetEntProp(weapon, Prop_Send, "m_iItemIDLow");
-	int userid = IsValidEntity(hOwnerEntity) ? GetClientUserId(hOwnerEntity) : 0;
-	
-	//int seed[3];
-	//seed[0] = itemIDLow;
-	//seed[1] = defindex;
-	//seed[2] = userid;
-	
-	//SetURandomSeed(seed, sizeof(seed));
-	
-	
-	if(IsValidEntity(weapon))
-		SetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex", 15000);
+
+	if (IsValidEntity(weapon) && GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == client)
+	{
+		int itemindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+
+		TFClassType class = TF2_GetPlayerClass(client);
+		char sClassName[32];
+
+		TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+		int slot = TF2Econ_GetItemLoadoutSlot(itemindex, class);
+
+		PrintToChat(client, "[SM] Item Index: %i, Classname: %s, Slot: %i", itemindex, sClassName, slot);
+
+		PrintToChat(client, "[SM] IsPaintKitable returns %i", IsPaintKitable(itemindex));
+
+		if(IsPaintKitable(itemindex))
+		{
+			PrintToChat(client, "[SM] Item %s at %i is warpaintable.", sClassName, itemindex);
+			AcceptEntityInput(weapon, "kill");
+
+			int iArg1 = StringToInt(arg1);
+			int iArg2 = StringToInt(arg2);
+
+			CreateWeapon(client, itemindex, sClassName, 99, 6, slot, iArg1, iArg2);
+		}
+	}
 	
 	return Plugin_Handled;
-}*/
+}
 
 // Next, make the handler.
 public int WearablesMenu_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -253,12 +279,14 @@ public int WearablesMenu_Handler(Menu menu, MenuAction action, int param1, int p
 		case MenuAction_Start:
 		{
 			// It's important to log anything in any way, the best is printtoserver, but if you just want to log to client to make it easier to get progress done, feel free.
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
 		}
 		
 		case MenuAction_Select:
@@ -274,7 +302,7 @@ public int WearablesMenu_Handler(Menu menu, MenuAction action, int param1, int p
 				}
 				case iUNUSUALS:
 				{
-					DrawWeaponUnusualMenu(param1);
+					DrawUnusualSlotSelectionMenu(param1);
 				}
 				case iUNUSUALTAUNTS:
 				{
@@ -293,7 +321,8 @@ public int WearablesMenu_Handler(Menu menu, MenuAction action, int param1, int p
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
 		}
 		
 		case MenuAction_End:
@@ -314,42 +343,8 @@ public int WearablesMenu_Handler(Menu menu, MenuAction action, int param1, int p
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
-}
 
-public Action PlayerSpawn(Event event, const char[] name, bool dontBroadcast)
-{
-	int client = GetClientOfUserId(GetEventInt(event, "userid"));
-	int weapon = GetEntPropEnt(client, Prop_Send, "m_hActiveWeapon");
-	
-	//CheckTaunt[client] = CreateTimer(3.0, Timer_CheckTaunt, GetClientSerial(client), TIMER_REPEAT);
-	
-	if (AreClientCookiesCached(client))
-	{
-		// Weapon Effect Float Cooie
-		char sCookieFloat[64];
-		GetClientCookie(client, UnusualWeaponFloatCookie, sCookieFloat, sizeof(sCookieFloat));
-		
-		float fCookie = StringToFloat(sCookieFloat);
-		
-		// Weapon Effect String Cookie
-		char sCookieValue[64];
-		GetClientCookie(client, UnusualWeaponCookie, sCookieValue, sizeof(sCookieValue));
-		
-		// Weapon Effect Bool Cookie
-		char sCookieBool[2];
-		GetClientCookie(client, UnusualWeaponBoolCookie, sCookieBool, sizeof(sCookieBool));
-		
-		int iCookie = StringToInt(sCookieBool);
-		
-		if (iCookie == 1) // Check bool
-		{
-			if (IsValidEntity(weapon))
-			{
-				TF2Attrib_SetByDefIndex(weapon, 134, fCookie); // Set weapon effect index
-				AttachParticleWeapon(weapon, sCookieValue, _); // Attach weapon effect string
-			}
-		}
-	}
+	return 0;
 }
 
 public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
@@ -365,6 +360,84 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		
 	if (AreClientCookiesCached(client))
 	{
+		if (IsValidEntity(slot1))
+		{
+			int itemindex = GetEntProp(slot1, Prop_Send, "m_iItemDefinitionIndex");
+
+			char sClassName[32];
+
+			TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+
+			if(IsPaintKitable(itemindex))
+			{
+				PrintToChat(client, "[SM] Item %s at %i is warpaintable.", sClassName, itemindex);
+
+				PrintToChat(client, "[SM] kseffect: %f, kssheen: %f, kstier: %f", KillstreakEffectID[client], KillstreakSheenID[client], KillstreakTierID[client]);
+
+				// UNUSUAL WEAPON SLOTS
+
+				// Primary
+
+				char sPrimaryUnusualWeaponValue[64];
+				GetClientCookie(client, PrimaryUnusualWeaponCookie, sPrimaryUnusualWeaponValue, sizeof(sPrimaryUnusualWeaponValue));
+				float fPrimaryUnusualWeaponValue = StringToFloat(sPrimaryUnusualWeaponValue);
+
+				if(fPrimaryUnusualWeaponValue > 0.0)
+				{
+					AcceptEntityInput(slot1, "kill");
+					CreateWeapon(client, itemindex, sClassName, 99, 6, slot1, 0, RoundToNearest(fPrimaryUnusualWeaponValue));
+				}
+			}
+		}
+
+		if(IsValidEntity(slot2))
+		{
+			int itemindex = GetEntProp(slot2, Prop_Send, "m_iItemDefinitionIndex");
+
+			char sClassName[32];
+
+			TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+
+			if(IsPaintKitable(itemindex))
+			{
+				// Secondary
+
+				char sSecondaryUnusualWeaponValue[64];
+				GetClientCookie(client, SecondaryUnusualWeaponCookie, sSecondaryUnusualWeaponValue, sizeof(sSecondaryUnusualWeaponValue));
+				float fSecondaryUnusualWeaponValue = StringToFloat(sSecondaryUnusualWeaponValue);
+
+				if(fSecondaryUnusualWeaponValue > 0.0)
+				{
+					AcceptEntityInput(slot2, "kill");
+					CreateWeapon(client, itemindex, sClassName, 99, 6, slot2, 0, RoundToNearest(fSecondaryUnusualWeaponValue));
+				}
+			}
+		}
+
+		if(IsValidEntity(slot3))
+		{
+			int itemindex = GetEntProp(slot3, Prop_Send, "m_iItemDefinitionIndex");
+
+			char sClassName[32];
+
+			TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+
+			if(IsPaintKitable(itemindex))
+			{
+				// Melee
+
+				char sMeleeUnusualWeaponValue[64];
+				GetClientCookie(client, MeleeUnusualWeaponCookie, sMeleeUnusualWeaponValue, sizeof(sMeleeUnusualWeaponValue));
+				float fMeleeUnusualWeaponValue = StringToFloat(sMeleeUnusualWeaponValue);
+
+				if(fMeleeUnusualWeaponValue > 0.0)
+				{
+					AcceptEntityInput(slot3, "kill");
+					CreateWeapon(client, itemindex, sClassName, 99, 6, slot3, 0, RoundToNearest(fMeleeUnusualWeaponValue));
+				}
+			}
+		}
+		
 		// KS Tiers
 		
 		// Primary	
@@ -376,10 +449,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fPrimaryCookieTierValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot1))
-				TF2Attrib_SetByDefIndex(slot1, 2025, fPrimaryCookieTierValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSTierPrimary, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fPrimaryCookieTierValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's PrimaryKillstreakTierCookie with %s", client, sPrimaryCookieTierValue);
 		
 		// Secondary
@@ -391,10 +469,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fSecondaryCookieTierValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot2))
-				TF2Attrib_SetByDefIndex(slot2, 2025, fSecondaryCookieTierValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSTierSecondary, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fSecondaryCookieTierValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's SecondaryKillstreakTierCookie with %s", client, sSecondaryCookieTierValue);
 		
 		// Melee
@@ -406,10 +489,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fMeleeCookieTierValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot3))
-				TF2Attrib_SetByDefIndex(slot3, 2025, fMeleeCookieTierValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSTierMelee, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fMeleeCookieTierValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's MeleeKillstreakTierCookie with %s", client, sPrimaryCookieTierValue);
 		
 		// KS Effects
@@ -423,10 +511,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fPrimaryCookieEffectValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot1))
-				TF2Attrib_SetByDefIndex(slot1, 2025, fPrimaryCookieEffectValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSEffectPrimary, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fPrimaryCookieEffectValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's PrimaryKillstreakEffectCookie with %s", client, sPrimaryCookieEffectValue);
 		
 		// Secondary
@@ -438,10 +531,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fSecondaryCookieEffectValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot2))
-				TF2Attrib_SetByDefIndex(slot2, 2025, fSecondaryCookieEffectValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSEffectSecondary, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fSecondaryCookieEffectValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's SecondaryKillstreakEffectCookie with %s", client, sPrimaryCookieEffectValue);
 		
 		// Melee
@@ -453,10 +551,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fMeleeCookieEffectValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot3))
-				TF2Attrib_SetByDefIndex(slot3, 2025, fMeleeCookieEffectValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSEffectMelee, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fMeleeCookieEffectValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's MeleeKillstreakEffectCookie with %s", client, sMeleeCookieEffectValue);
 		
 		// KS Sheen
@@ -470,10 +573,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fPrimaryCookieSheenValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot1))
-				TF2Attrib_SetByDefIndex(slot1, 2025, fPrimaryCookieSheenValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSSheenPrimary, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fPrimaryCookieSheenValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's PrimaryKillstreakSheenCookie with %s", client, sPrimaryCookieSheenValue);
 		
 		// Secondary
@@ -485,10 +593,15 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fSecondaryCookieSheenValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot2))
-				TF2Attrib_SetByDefIndex(slot2, 2025, fSecondaryCookieSheenValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSSheenSecondary, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fSecondaryCookieSheenValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's SecondaryKillstreakSheenCookie with %s", client, sSecondaryCookieSheenValue);
 		
 		// Melee
@@ -500,12 +613,185 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 		if (fMeleeCookieSheenValue > 0.0) // If tier cookie is higher than 0.0
 		{
 			if(IsValidEntity(slot3))
-				TF2Attrib_SetByDefIndex(slot3, 2025, fMeleeCookieSheenValue); // Set it to choice picked in menu.
+			{
+				DataPack pack;
+				CreateDataTimer(2.0, FixKSSheenMelee, pack);
+				pack.WriteCell(client);
+				pack.WriteFloat(fMeleeCookieSheenValue);
+			}
 		}
 		
-		if(g_bLogToConsole.BoolValue)
+		if(g_cServerLogging.BoolValue)
 			PrintToServer("Retrieved %N's MeleeKillstreakSheenCookie with %s", client, sMeleeCookieSheenValue);
 	}
+
+	return Plugin_Continue;
+}
+
+// Killstreak Tiers Fix (Thought it was better than looping through all players on RoundActive)
+public Action FixKSTierPrimary(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2025, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+
+public Action FixKSTierSecondary(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2025, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+
+public Action FixKSTierMelee(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2025, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+// Killstreak Effects Fix
+
+public Action FixKSEffectPrimary(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2013, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+
+public Action FixKSEffectSecondary(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2013, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+
+public Action FixKSEffectMelee(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2013, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+
+// Killstreak Sheens
+
+public Action FixKSSheenPrimary(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2014, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+
+public Action FixKSSheenSecondary(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2014, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
+}
+
+public Action FixKSSheenMelee(Handle timer, DataPack pack)
+{
+	int client;
+	int slot; 
+	float cookie;
+
+	pack.Reset();
+	client = pack.ReadCell();
+	cookie = pack.ReadFloat();
+
+	slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
+	if(IsValidEntity(slot))
+		TF2Attrib_SetByDefIndex(slot, 2014, cookie); // Set it to choice picked in menu.
+
+	return Plugin_Stop;
 }
 
 public Action PlayerDeath(Event event, const char[] name, bool dontBroadcast)
@@ -516,6 +802,8 @@ public Action PlayerDeath(Event event, const char[] name, bool dontBroadcast)
 	DeleteParticle(g_WepEnt[client]);
 	
 	g_bIsTaunting[client] = false;
+
+	return Plugin_Continue;
 	
 	//if (CheckTaunt[client] != null)
 	//KillTimer(CheckTaunt[client]);
@@ -605,6 +893,8 @@ public Action RefireShowStopperRedTimer(Handle timer, any serial)
 			}
 		}
 	}
+
+	return Plugin_Handled;
 }
 
 public Action RefireShowStopperBlueTimer(Handle timer, any serial)
@@ -624,6 +914,8 @@ public Action RefireShowStopperBlueTimer(Handle timer, any serial)
 			}
 		}
 	}
+
+	return Plugin_Handled;
 }
 
 public Action RefireMegaStrikeTimer(Handle timer, any serial)
@@ -643,6 +935,8 @@ public Action RefireMegaStrikeTimer(Handle timer, any serial)
 			}
 		}
 	}
+
+	return Plugin_Handled;
 }
 
 public Action RefireRoaringRocketsTimer(Handle timer, any serial)
@@ -662,6 +956,8 @@ public Action RefireRoaringRocketsTimer(Handle timer, any serial)
 			}
 		}
 	}
+
+	return Plugin_Handled;
 }
 
 public int UnusualTauntMenu_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -670,12 +966,14 @@ public int UnusualTauntMenu_Handler(Menu menu, MenuAction action, int param1, in
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
@@ -691,117 +989,117 @@ public int UnusualTauntMenu_Handler(Menu menu, MenuAction action, int param1, in
 					{
 						HasPickedUnusualTaunt[param1] = false;
 						DeleteParticle(g_Ent[param1]);
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have reset your effect.");
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have reset your effect.");
 					}
 					case 1:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						//Format(UnusualTauntID[param1], sizeof(UnusualTauntID[]), "%s", "utaunt_firework_teamcolor_red"); // Thank you Techno
 						UnusualTauntID[param1] = "utaunt_firework_teamcolor_red";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Showstopper (RED)");
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Showstopper (RED)");
 					}
 					case 2:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_firework_teamcolor_blue";
 						//Format(UnusualTauntID[param1], sizeof(UnusualTauntID[]), "%s", "utaunt_firework_teamcolor_blue");
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Showstopper (BLU)");
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Showstopper (BLU)");
 					}
 					case 3:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_beams_yellow";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Holy Grail");
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Holy Grail");
 					}
 					case 4:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_disco_party";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect '72");
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect '72");
 					}
 					case 5:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_hearts_glow_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Fountain Of Delight");
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Fountain Of Delight");
 					}
 					case 6:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_meteor_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Screaming Tiger", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Screaming Tiger", info);
 					}
 					case 7:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_cash_confetti";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Skill Gotten Gains", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Skill Gotten Gains", info);
 					}
 					case 8:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_tornado_parent_black";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Midnight Whirlwind", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Midnight Whirlwind", info);
 					}
 					case 9:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_tornado_parent_white";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Silver Cyclone", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Silver Cyclone", info);
 					}
 					case 10:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_lightning_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Mega Strike", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Mega Strike", info);
 					}
 					case 11:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_souls_green_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Haunted Phantasm", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Haunted Phantasm", info);
 					}
 					case 12:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_souls_purple_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Ghastly Ghosts", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Ghastly Ghosts", info);
 					}
 					case 13:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_hellpit_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Hellish Inferno", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Hellish Inferno", info);
 					}
 					case 14:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_firework_dragon_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Roaring Rockets", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Roaring Rockets", info);
 					}
 					case 15:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_bubbles_glow_green_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Acid Bubbles of Envy", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Acid Bubbles of Envy", info);
 					}
 					case 16:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_bubbles_glow_orange_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Flammable Bubbles of Attraction", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Flammable Bubbles of Attraction", info);
 					}
 					case 17:
 					{
 						HasPickedUnusualTaunt[param1] = true;
 						UnusualTauntID[param1] = "utaunt_bubbles_glow_purple_parent";
-						CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have picked effect Poisonous Bubbles of Regret", info);
+						CPrintToChat(param1, "{orange}Hellhound {white}| You have picked effect Poisonous Bubbles of Regret", info);
 					}
 				}
 			}
 			else
 			{
-				CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You may not change effect when taunting.");
+				CPrintToChat(param1, "{orange}Hellhound {white}| You may not change effect when taunting.");
 				DrawUnusualTauntMenu(param1);
 			}
 			
@@ -818,7 +1116,8 @@ public int UnusualTauntMenu_Handler(Menu menu, MenuAction action, int param1, in
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 		}
 		
 		case MenuAction_End:
@@ -839,6 +1138,8 @@ public int UnusualTauntMenu_Handler(Menu menu, MenuAction action, int param1, in
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int UnusualWeaponMenu_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -847,120 +1148,206 @@ public int UnusualWeaponMenu_Handler(Menu menu, MenuAction action, int param1, i
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
 		{
 			char info[24];
 			GetMenuItem(menu, param2, info, sizeof(info));
-			int weapon = GetEntPropEnt(param1, Prop_Send, "m_hActiveWeapon");
+			int weapon;
 			float effect = StringToFloat(info);
 			WeaponUnusualID[param1] = effect;
+
+			if(iPrimarySlotUnusualWeaponChosen[param1] == 1)
+			{
+				weapon = GetPlayerWeaponSlot(param1, TFWeaponSlot_Primary);
+			}
+			else if(iSecondarySlotUnusualWeaponChosen[param1] == 1)
+			{
+				weapon = GetPlayerWeaponSlot(param1, TFWeaponSlot_Secondary);
+			}
+			else if(iMeleeSlotUnusualWeaponChosen[param1] == 1)
+			{
+				weapon = GetPlayerWeaponSlot(param1, TFWeaponSlot_Melee);
+			}
 			
 			switch (param2)
 			{
 				case 0:
 				{
-					if (IsValidEntity(weapon))
+					if (IsValidEntity(weapon) && GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == param1)
 					{
-						TF2Attrib_SetByDefIndex(weapon, 370, effect);
-						AttachParticleWeapon(weapon, "", _);
+						int itemindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+
+						TFClassType class = TF2_GetPlayerClass(param1);
+						char sClassName[32];
+
+						TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+						int slot = TF2Econ_GetItemLoadoutSlot(itemindex, class);
+
+						if(IsPaintKitable(itemindex))
+						{
+							PrintToChat(param1, "[SM] Item %s at %i is warpaintable.", sClassName, itemindex);
+							AcceptEntityInput(weapon, "kill");
+
+							PrintToChat(param1, "[SM] kseffect: %f, kssheen: %f, kstier: %f", KillstreakEffectID[param1], KillstreakSheenID[param1], KillstreakTierID[param1]);
+
+							CreateWeapon(param1, itemindex, sClassName, 99, 6, slot, 0, RoundToNearest(effect));
+						}
 					}
 					HasPickedWeaponUnusual[param1] = false;
-					CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have reset your weapon effect.");
+					CPrintToChat(param1, "{orange}Hellhound {white}| You have reset your weapon effect.");
 				}
 				case 1:
 				{
-					if (IsValidEntity(weapon))
+					if (IsValidEntity(weapon) && GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == param1)
 					{
-						TF2Attrib_SetByDefIndex(weapon, 370, effect);
-						AttachParticleWeapon(weapon, "weapon_unusual_hot", _);
-						strWeaponUnusual[param1] = "weapon_unusual_hot";
+						int itemindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+
+						TFClassType class = TF2_GetPlayerClass(param1);
+						char sClassName[32];
+
+						TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+						int slot = TF2Econ_GetItemLoadoutSlot(itemindex, class);
+
+						if(IsPaintKitable(itemindex))
+						{
+							PrintToChat(param1, "[SM] Item %s at %i is warpaintable.", sClassName, itemindex);
+							AcceptEntityInput(weapon, "kill");
+
+							CreateWeapon(param1, itemindex, sClassName, 99, 6, slot, 0, RoundToNearest(effect));
+						}
 					}
 					HasPickedWeaponUnusual[param1] = true;
-					CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have chosen weapon effect Hot");
+					CPrintToChat(param1, "{orange}Hellhound {white}| You have chosen weapon effect Hot");
 				}
 				case 2:
 				{
-					if (IsValidEntity(weapon))
+					if (IsValidEntity(weapon) && GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == param1)
 					{
-						TF2Attrib_SetByDefIndex(weapon, 370, effect);
-						AttachParticleWeapon(weapon, "weapon_unusual_isotope", _);
-						strWeaponUnusual[param1] = "weapon_unusual_isotope";
+						int itemindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+
+						TFClassType class = TF2_GetPlayerClass(param1);
+						char sClassName[32];
+
+						TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+						int slot = TF2Econ_GetItemLoadoutSlot(itemindex, class);
+
+						if(IsPaintKitable(itemindex))
+						{
+							PrintToChat(param1, "[SM] Item %s at %i is warpaintable.", sClassName, itemindex);
+							AcceptEntityInput(weapon, "kill");
+
+							CreateWeapon(param1, itemindex, sClassName, 99, 6, slot, 0, RoundToNearest(effect));
+						}
 					}
 					HasPickedWeaponUnusual[param1] = true;
-					CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have chosen weapon effect Isotope");
+					CPrintToChat(param1, "{orange}Hellhound {white}| You have chosen weapon effect Isotope");
 				}
 				case 3:
 				{
-					if (IsValidEntity(weapon))
+					if (IsValidEntity(weapon) && GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == param1)
 					{
-						HasPickedWeaponUnusual[param1] = true;
-						TF2Attrib_SetByDefIndex(weapon, 370, effect);
-						AttachParticleWeapon(weapon, "weapon_unusual_cool", _);
-						strWeaponUnusual[param1] = "weapon_unusual_cool";
+						int itemindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+
+						TFClassType class = TF2_GetPlayerClass(param1);
+						char sClassName[32];
+
+						TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+						int slot = TF2Econ_GetItemLoadoutSlot(itemindex, class);
+
+						if(IsPaintKitable(itemindex))
+						{
+							PrintToChat(param1, "[SM] Item %s at %i is warpaintable.", sClassName, itemindex);
+							AcceptEntityInput(weapon, "kill");
+
+							CreateWeapon(param1, itemindex, sClassName, 99, 6, slot, 0, RoundToNearest(effect));
+						}
 					}
 					HasPickedWeaponUnusual[param1] = true;
-					CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have chosen weapon effect Cool");
+					CPrintToChat(param1, "{orange}Hellhound {white}| You have chosen weapon effect Cool");
 				}
 				case 4:
 				{
-					if (IsValidEntity(weapon))
+					if (IsValidEntity(weapon) && GetEntPropEnt(weapon, Prop_Send, "m_hOwnerEntity") == param1)
 					{
-						TF2Attrib_SetByDefIndex(weapon, 370, effect);
-						AttachParticleWeapon(weapon, "weapon_unusual_energyorb", _);
-						strWeaponUnusual[param1] = "weapon_unusual_energyorb";
+						int itemindex = GetEntProp(weapon, Prop_Send, "m_iItemDefinitionIndex");
+
+						TFClassType class = TF2_GetPlayerClass(param1);
+						char sClassName[32];
+
+						TF2Econ_GetItemClassName(itemindex, sClassName, sizeof(sClassName));
+						int slot = TF2Econ_GetItemLoadoutSlot(itemindex, class);
+
+						if(IsPaintKitable(itemindex))
+						{
+							PrintToChat(param1, "[SM] Item %s at %i is warpaintable.", sClassName, itemindex);
+							AcceptEntityInput(weapon, "kill");
+
+							CreateWeapon(param1, itemindex, sClassName, 99, 6, slot, 0, RoundToNearest(effect));
+						}
 					}
 					HasPickedWeaponUnusual[param1] = true;
-					CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have chosen weapon effect Energy Orb");
+					CPrintToChat(param1, "{orange}Hellhound {white}| You have chosen weapon effect Energy Orb");
 				}
 			}
 			
 			if (AreClientCookiesCached(param1))
 			{
-				char sCookieValue[64];
-				GetClientCookie(param1, UnusualWeaponCookie, sCookieValue, sizeof(sCookieValue));
-				
-				sCookieValue = strWeaponUnusual[param1];
-				
-				SetClientCookie(param1, UnusualWeaponCookie, sCookieValue);
-				
-				char sCookieFloat[64];
-				GetClientCookie(param1, UnusualWeaponFloatCookie, sCookieFloat, sizeof(sCookieFloat));
-				
-				float fCookie = StringToFloat(sCookieFloat);
-				
-				fCookie = effect;
-				
-				FloatToString(fCookie, sCookieFloat, sizeof(sCookieFloat));
-				
-				SetClientCookie(param1, UnusualWeaponFloatCookie, sCookieFloat);
-				
-				char sCookieBool[2];
-				GetClientCookie(param1, UnusualWeaponBoolCookie, sCookieBool, sizeof(sCookieBool));
-				
-				int iCookie = StringToInt(sCookieBool);
-				
-				if (HasPickedWeaponUnusual[param1])
-					iCookie = 1;
-				else
-					iCookie = 0;
-				
-				IntToString(iCookie, sCookieBool, sizeof(sCookieBool));
-				
-				SetClientCookie(param1, UnusualWeaponBoolCookie, sCookieBool);
+				if(iPrimarySlotUnusualWeaponChosen[param1])
+				{
+					char sPrimaryCookieValue[64];
+					GetClientCookie(param1, PrimaryUnusualWeaponCookie, sPrimaryCookieValue, sizeof(sPrimaryCookieValue));
+					
+					float fPrimaryCookieValue = StringToFloat(sPrimaryCookieValue);
+					
+					fPrimaryCookieValue = effect;
+					
+					FloatToString(fPrimaryCookieValue, sPrimaryCookieValue, sizeof(sPrimaryCookieValue));
+					
+					SetClientCookie(param1, PrimaryKillstreakTierCookie, sPrimaryCookieValue);
+				}
+				else if(iSecondarySlotUnusualWeaponChosen[param1])
+				{
+					char sSecondaryCookieValue[64];
+					GetClientCookie(param1, SecondaryUnusualWeaponCookie, sSecondaryCookieValue, sizeof(sSecondaryCookieValue));
+					
+					float fSecondaryCookieValue = StringToFloat(sSecondaryCookieValue);
+					
+					fSecondaryCookieValue = effect;
+					
+					FloatToString(fSecondaryCookieValue, sSecondaryCookieValue, sizeof(sSecondaryCookieValue));
+					
+					SetClientCookie(param1, SecondaryUnusualWeaponCookie, sSecondaryCookieValue);
+				}
+				else if(iMeleeSlotUnusualWeaponChosen[param1])
+				{
+					char sMeleeCookieValue[64];
+					GetClientCookie(param1, MeleeUnusualWeaponCookie, sMeleeCookieValue, sizeof(sMeleeCookieValue));
+					
+					float fMeleeCookieValue = StringToFloat(sMeleeCookieValue);
+					
+					fMeleeCookieValue = effect;
+					
+					FloatToString(fMeleeCookieValue, sMeleeCookieValue, sizeof(sMeleeCookieValue));
+					
+					SetClientCookie(param1, MeleeUnusualWeaponCookie, sMeleeCookieValue);
+				}
 			}
 		}
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 		}
 		
 		case MenuAction_End:
@@ -981,6 +1368,8 @@ public int UnusualWeaponMenu_Handler(Menu menu, MenuAction action, int param1, i
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 
@@ -990,12 +1379,14 @@ public int KillstreaksMenu_Handler(Menu menu, MenuAction action, int param1, int
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
@@ -1022,7 +1413,8 @@ public int KillstreaksMenu_Handler(Menu menu, MenuAction action, int param1, int
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 		}
 		
 		case MenuAction_End:
@@ -1043,6 +1435,8 @@ public int KillstreaksMenu_Handler(Menu menu, MenuAction action, int param1, int
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -1051,12 +1445,14 @@ public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1,
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
@@ -1090,7 +1486,7 @@ public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1,
 				TF2Attrib_SetByDefIndex(weapon, 2025, tier);
 			}
 			
-			CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have selected killstreak tier %f, on slot %s", tier, sSlot);
+			CPrintToChat(param1, "{orange}Hellhound {white}| You have selected killstreak tier %f, on slot %s", tier, sSlot);
 			if (GetConVarBool(RegeneratePlayer))
 				TF2_RegeneratePlayer(param1);
 			
@@ -1111,7 +1507,8 @@ public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1,
 					
 					SetClientCookie(param1, PrimaryKillstreakTierCookie, sPrimaryCookieValue);
 					
-					PrintToServer("Updated %N's PrimaryKillstreakTierCookie with %s", param1, sPrimaryCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's PrimaryKillstreakTierCookie with %s", param1, sPrimaryCookieValue);
 				}
 				else if (iSecondarySlotTiersChosen[param1])
 				{
@@ -1126,7 +1523,8 @@ public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1,
 					
 					SetClientCookie(param1, SecondaryKillstreakTierCookie, sSecondaryCookieValue);
 					
-					PrintToServer("Updated %N's SecondaryKillstreakTierCookie with %s", param1, sSecondaryCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's SecondaryKillstreakTierCookie with %s", param1, sSecondaryCookieValue);
 				}
 				else if (iMeleeSlotTiersChosen[param1])
 				{
@@ -1141,7 +1539,8 @@ public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1,
 					
 					SetClientCookie(param1, MeleeKillstreakTierCookie, sMeleeCookieValue);
 					
-					PrintToServer("Updated %N's MeleeKillstreakTierCookie with %s", param1, sMeleeCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's MeleeKillstreakTierCookie with %s", param1, sMeleeCookieValue);
 				}
 			}
 			
@@ -1153,7 +1552,8 @@ public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1,
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 			
 			// Reset Values
 			iPrimarySlotTiersChosen[param1] = false;
@@ -1179,6 +1579,8 @@ public int KillstreakTiersMenu_Handler(Menu menu, MenuAction action, int param1,
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -1187,12 +1589,14 @@ public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
@@ -1226,7 +1630,7 @@ public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1
 				TF2Attrib_SetByDefIndex(weapon, 2013, effect);
 			}
 			
-			CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have selected killstreak effect %f, on slot %s", effect, sSlot);
+			CPrintToChat(param1, "{orange}Hellhound {white}| You have selected killstreak effect %f, on slot %s", effect, sSlot);
 			if (GetConVarBool(RegeneratePlayer))
 				TF2_RegeneratePlayer(param1);
 			
@@ -1247,7 +1651,8 @@ public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1
 					
 					SetClientCookie(param1, PrimaryKillstreakEffectCookie, sPrimaryCookieValue);
 					
-					PrintToServer("Updated %N's PrimaryKillstreakEffectCookie with %s", param1, sPrimaryCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's PrimaryKillstreakEffectCookie with %s", param1, sPrimaryCookieValue);
 				}
 				else if (iSecondarySlotEffectsChosen[param1])
 				{
@@ -1262,7 +1667,8 @@ public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1
 					
 					SetClientCookie(param1, SecondaryKillstreakEffectCookie, sSecondaryCookieValue);
 					
-					PrintToServer("Updated %N's SecondaryKillstreakEffectCookie with %s", param1, sSecondaryCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's SecondaryKillstreakEffectCookie with %s", param1, sSecondaryCookieValue);
 				}
 				else if (iMeleeSlotEffectsChosen[param1])
 				{
@@ -1277,7 +1683,8 @@ public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1
 					
 					SetClientCookie(param1, MeleeKillstreakEffectCookie, sMeleeCookieValue);
 					
-					PrintToServer("Updated %N's MeleeKillstreakEffectCookie with %s", param1, sMeleeCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's MeleeKillstreakEffectCookie with %s", param1, sMeleeCookieValue);
 				}
 			}
 			
@@ -1289,7 +1696,8 @@ public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 			
 			iPrimarySlotEffectsChosen[param1] = false;
 			iSecondarySlotEffectsChosen[param1] = false;
@@ -1314,6 +1722,8 @@ public int KillstreakEffectMenu_Handler(Menu menu, MenuAction action, int param1
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -1322,12 +1732,14 @@ public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1,
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
@@ -1362,7 +1774,7 @@ public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1,
 				TF2Attrib_SetByDefIndex(weapon, 2014, sheen);
 			}
 			
-			CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have selected killstreak effect %f, on slot %s", sheen, sSlot);
+			CPrintToChat(param1, "{orange}Hellhound {white}| You have selected killstreak effect %f, on slot %s", sheen, sSlot);
 			if (GetConVarBool(RegeneratePlayer))
 				TF2_RegeneratePlayer(param1);
 			
@@ -1383,7 +1795,8 @@ public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1,
 					
 					SetClientCookie(param1, PrimaryKillstreakSheenCookie, sPrimaryCookieValue);
 					
-					PrintToServer("Updated %N's PrimaryKillstreakSheenCookie with %s", param1, sPrimaryCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's PrimaryKillstreakSheenCookie with %s", param1, sPrimaryCookieValue);
 				}
 				else if (iSecondarySlotSheenChosen[param1])
 				{
@@ -1398,7 +1811,8 @@ public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1,
 					
 					SetClientCookie(param1, SecondaryKillstreakSheenCookie, sSecondaryCookieValue);
 					
-					PrintToServer("Updated %N's SecondaryKillstreakSheenCookie with %s", param1, sSecondaryCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's SecondaryKillstreakSheenCookie with %s", param1, sSecondaryCookieValue);
 				}
 				else if (iMeleeSlotSheenChosen[param1])
 				{
@@ -1413,7 +1827,8 @@ public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1,
 					
 					SetClientCookie(param1, MeleeKillstreakSheenCookie, sMeleeCookieValue);
 					
-					PrintToServer("Updated %N's MeleeKillstreakSheenCookie with %s", param1, sMeleeCookieValue);
+					if(g_cServerLogging.BoolValue)
+						PrintToServer("Updated %N's MeleeKillstreakSheenCookie with %s", param1, sMeleeCookieValue);
 				}
 			}
 			
@@ -1424,7 +1839,8 @@ public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1,
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 			
 			iPrimarySlotSheenChosen[param1] = false;
 			iSecondarySlotSheenChosen[param1] = false;
@@ -1449,6 +1865,8 @@ public int KillstreakSheenMenu_Handler(Menu menu, MenuAction action, int param1,
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int ItemAttributes_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -1457,17 +1875,20 @@ public int ItemAttributes_Handler(Menu menu, MenuAction action, int param1, int 
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
 		{
 			int weapon = GetEntPropEnt(param1, Prop_Send, "m_hActiveWeapon");
+			
 			char sInfo[32];
 			menu.GetItem(param2, sInfo, sizeof(sInfo));
 			float choice = StringToFloat(sInfo);
@@ -1475,19 +1896,27 @@ public int ItemAttributes_Handler(Menu menu, MenuAction action, int param1, int 
 			if (IsValidEntity(weapon))
 			{
 				if (choice == 2027.0)
+				{
 					TF2Attrib_SetByDefIndex(weapon, 2027, 1.0);
+					TF2Attrib_SetByDefIndex(weapon, 2022, 1.0);
+					TF2Attrib_SetByDefIndex(weapon, 542, 1.0);
+				}
 				else if (choice == 2053)
+				{
 					TF2Attrib_SetByDefIndex(weapon, 2053, 1.0);
+					TF2Attrib_SetByDefIndex(weapon, 542, 1.0);
+				}
 			}
 			
-			CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have selected item attribute %f", choice);
+			CPrintToChat(param1, "{orange}Hellhound {white}| You have selected item attribute %f", choice);
 			if (GetConVarBool(RegeneratePlayer))
 				TF2_RegeneratePlayer(param1);
 		}
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 		}
 		
 		case MenuAction_End:
@@ -1508,6 +1937,8 @@ public int ItemAttributes_Handler(Menu menu, MenuAction action, int param1, int 
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int DrawToggleWarPaint_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -1516,12 +1947,14 @@ public int DrawToggleWarPaint_Handler(Menu menu, MenuAction action, int param1, 
 	{
 		case MenuAction_Start:
 		{
-			PrintToServer("Displaying menu"); // Log it
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2);
 		}
 		
 		case MenuAction_Select:
@@ -1538,12 +1971,13 @@ public int DrawToggleWarPaint_Handler(Menu menu, MenuAction action, int param1, 
 					bNeedsWarPaint[param1] = false;
 			}
 			
-			CPrintToChat(param1, "{magenta}Sanctuary.TF {white}| You have toggled war paint.");
+			CPrintToChat(param1, "{orange}Hellhound {white}| You have toggled war paint.");
 		}
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2);
 		}
 		
 		case MenuAction_End:
@@ -1564,6 +1998,8 @@ public int DrawToggleWarPaint_Handler(Menu menu, MenuAction action, int param1, 
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 // Let's make functions to use instead of doing massive lines of code just to draw menus.
@@ -1752,6 +2188,21 @@ void DrawEffectsSelectionMenu(int client)
 	menu.Display(client, MENU_TIME_FOREVER); // Draw the menu to the client.
 }
 
+void DrawUnusualSlotSelectionMenu(int client)
+{
+	Menu menu = new Menu(UnusualSlotSelectionSlot_Handler, MENU_ACTIONS_ALL);
+
+	menu.SetTitle("Choose a slot");
+
+	// Add the items
+	menu.AddItem("0", "Primary");
+	menu.AddItem("1", "Secondary");
+	menu.AddItem("2", "Melee");
+
+	menu.ExitButton = true;
+	menu.Display(client, MENU_TIME_FOREVER);
+}
+
 public int SheenSelection_Handler(Menu menu, MenuAction action, int param1, int param2)
 {
 	switch (action)
@@ -1759,12 +2210,15 @@ public int SheenSelection_Handler(Menu menu, MenuAction action, int param1, int 
 		case MenuAction_Start:
 		{
 			// It's important to log anything in any way, the best is printtoserver, but if you just want to log to client to make it easier to get progress done, feel free.
-			PrintToServer("Displaying menu"); // Log it
+
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
 		}
 		
 		case MenuAction_Select:
@@ -1794,7 +2248,8 @@ public int SheenSelection_Handler(Menu menu, MenuAction action, int param1, int 
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
 		}
 		
 		case MenuAction_End:
@@ -1815,6 +2270,8 @@ public int SheenSelection_Handler(Menu menu, MenuAction action, int param1, int 
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int TiersSelection_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -1824,12 +2281,15 @@ public int TiersSelection_Handler(Menu menu, MenuAction action, int param1, int 
 		case MenuAction_Start:
 		{
 			// It's important to log anything in any way, the best is printtoserver, but if you just want to log to client to make it easier to get progress done, feel free.
-			PrintToServer("Displaying menu"); // Log it
+
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
 		}
 		
 		case MenuAction_Select:
@@ -1859,7 +2319,8 @@ public int TiersSelection_Handler(Menu menu, MenuAction action, int param1, int 
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
 		}
 		
 		case MenuAction_End:
@@ -1880,6 +2341,8 @@ public int TiersSelection_Handler(Menu menu, MenuAction action, int param1, int 
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
 }
 
 public int EffectsSelection_Handler(Menu menu, MenuAction action, int param1, int param2)
@@ -1889,12 +2352,15 @@ public int EffectsSelection_Handler(Menu menu, MenuAction action, int param1, in
 		case MenuAction_Start:
 		{
 			// It's important to log anything in any way, the best is printtoserver, but if you just want to log to client to make it easier to get progress done, feel free.
-			PrintToServer("Displaying menu"); // Log it
+
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
 		}
 		
 		case MenuAction_Display:
 		{
-			PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
 		}
 		
 		case MenuAction_Select:
@@ -1924,7 +2390,8 @@ public int EffectsSelection_Handler(Menu menu, MenuAction action, int param1, in
 		
 		case MenuAction_Cancel:
 		{
-			PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
 		}
 		
 		case MenuAction_End:
@@ -1945,6 +2412,79 @@ public int EffectsSelection_Handler(Menu menu, MenuAction action, int param1, in
 			menu.GetItem(param2, info, sizeof(info));
 		}
 	}
+
+	return 0;
+}
+
+public int UnusualSlotSelectionSlot_Handler(Menu menu, MenuAction action, int param1, int param2)
+{
+	switch (action)
+	{
+		case MenuAction_Start:
+		{
+			// It's important to log anything in any way, the best is printtoserver, but if you just want to log to client to make it easier to get progress done, feel free.
+
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Displaying menu"); // Log it
+		}
+		
+		case MenuAction_Display:
+		{
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d was sent menu with panel %x", param1, param2); // Log so you can check if it gets sent.
+		}
+		
+		case MenuAction_Select:
+		{
+			char sInfo[32];
+			menu.GetItem(param2, sInfo, sizeof(sInfo));
+			
+			switch (param2)
+			{
+				case 0: // Primary
+				{
+					iPrimarySlotUnusualWeaponChosen[param1] = 1;
+					DrawWeaponUnusualMenu(param1);
+				}
+				case 1: // Secondary
+				{
+					iSecondarySlotUnusualWeaponChosen[param1] = 1;
+					DrawWeaponUnusualMenu(param1);
+				}
+				case 2: // Melee
+				{
+					iMeleeSlotUnusualWeaponChosen[param1] = 1;
+					DrawWeaponUnusualMenu(param1);
+				}
+			}
+		}
+		
+		case MenuAction_Cancel:
+		{
+			if(g_cServerLogging.BoolValue)
+				PrintToServer("Client %d's menu was cancelled for reason %d", param1, param2); // Logging once again.
+		}
+		
+		case MenuAction_End:
+		{
+			delete menu;
+		}
+		
+		case MenuAction_DrawItem:
+		{
+			int style;
+			char info[32];
+			menu.GetItem(param2, info, sizeof(info), style);
+		}
+		
+		case MenuAction_DisplayItem:
+		{
+			char info[32];
+			menu.GetItem(param2, info, sizeof(info));
+		}
+	}
+
+	return 0;
 }
 
 void DrawToggleWarPaint(int client)
@@ -1985,42 +2525,11 @@ void AttachParticle(int iEntity, char[] strParticleType)
 		SetVariantString(strName);
 		AcceptEntityInput(iParticle, "SetParent", iParticle, iParticle, 0);
 		SetVariantString("");
-		AcceptEntityInput(iParticle, "SetParentAttachment", iParticle, iParticle, 0);
+		//AcceptEntityInput(iParticle, "SetParentAttachment", iParticle, iParticle, 0);
 		ActivateEntity(iParticle);
 		AcceptEntityInput(iParticle, "start");
 		
 		g_Ent[iEntity] = iParticle;
-	}
-}
-
-void AttachParticleWeapon(int iEntity, char[] strParticleEffect, char[] strAttachPoint = "")
-{
-	int iParticle = CreateEntityByName("info_particle_system");
-	
-	if (IsValidEdict(iParticle))
-	{
-		float flPos[3];
-		GetEntPropVector(iEntity, Prop_Send, "m_vecOrigin", flPos);
-		flPos[2] += 10;
-		
-		TeleportEntity(iParticle, flPos, NULL_VECTOR, NULL_VECTOR);
-		
-		DispatchKeyValue(iParticle, "effect_name", strParticleEffect);
-		DispatchSpawn(iParticle);
-		
-		SetVariantString("!activator");
-		AcceptEntityInput(iParticle, "SetParent", iEntity);
-		ActivateEntity(iParticle);
-		
-		if (strlen(strAttachPoint))
-		{
-			SetVariantString(strAttachPoint);
-			AcceptEntityInput(iParticle, "SetParentAttachmentMaintainOffset");
-		}
-		
-		AcceptEntityInput(iParticle, "start");
-		
-		g_WepEnt[iEntity] = iParticle;
 	}
 }
 
@@ -2044,11 +2553,15 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] classname, int iItemDe
 {
 	if (StrEqual(classname, "tf_weapon_scattergun") && bNeedsWarPaint[client])
 		return Plugin_Handled;
+		
+	hItem = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES);
+	
+	TF2Items_SetNumAttributes(hItem, 1); // 1 Attribute is unusual.
 	
 	return Plugin_Continue;
 }
 
-void ApplyWarPaint(int client)
+/*void ApplyWarPaint(int client)
 {
 	if (IsClientInGame(client))
 	{
@@ -2069,7 +2582,7 @@ void ApplyWarPaint(int client)
 			EquipPlayerWeapon(client, iWeapon);
 		}
 	}
-}
+}*/
 
 bool IsPaintKitable(int iItemId)
 {
@@ -2081,4 +2594,382 @@ bool IsPaintKitable(int iItemId)
 		}
 	}
 	return false;
+}
+
+// modified functions from PC Gamer's Gimme Plugin below this line.
+
+int CreateWeapon(int client, int itemindex, const char[] classname, int level, int quality, int weaponSlot, int warpaint, int effect)
+{
+	int newitem = CreateEntityByName(classname);
+	
+	if (!IsValidEntity(newitem))
+	{
+		PrintToChat(client, "Item %i : %s is invalid for current class", itemindex, classname);
+		return false;
+	}
+
+	if (StrEqual(classname, "tf_weapon_invis"))
+	{
+		weaponSlot = 4;
+	}
+	
+	if (itemindex == 735 || itemindex == 736 || StrEqual(classname, "tf_weapon_sapper"))
+	{
+		weaponSlot = 1;
+	}
+	
+	if (StrEqual(classname, "tf_weapon_revolver"))
+	{
+		weaponSlot = 0;
+	}	
+
+	if (TF2_GetPlayerClass(client) == TFClass_Engineer && weaponSlot > 2 && weaponSlot < 8)
+	{
+		return newitem;
+	}
+	
+	if(weaponSlot < 6)
+	{
+		TF2_RemoveWeaponSlot(client, weaponSlot);		
+	}
+	
+	char entclass[64];
+
+	GetEntityNetClass(newitem, entclass, sizeof(entclass));	
+	SetEntData(newitem, FindSendPropInfo(entclass, "m_iItemDefinitionIndex"), itemindex);
+	SetEntData(newitem, FindSendPropInfo(entclass, "m_bInitialized"), 1);
+	SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityLevel"), level);
+	SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), quality);
+	SetEntProp(newitem, Prop_Send, "m_bValidatedAttachedEntity", 1);
+	
+	SetEntProp(newitem, Prop_Send, "m_iAccountID", GetSteamAccountID(client));
+	SetEntPropEnt(newitem, Prop_Send, "m_hOwnerEntity", client);
+	
+	if (level > 0)
+	{
+		SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityLevel"), level);
+	}
+	else
+	{
+		SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityLevel"), GetRandomUInt(1,99));
+	}
+
+	switch (itemindex)
+	{
+	case 735, 736, 810, 831, 933, 1080, 1102:
+		{
+			SetEntProp(newitem, Prop_Send, "m_iObjectType", 3);
+			SetEntProp(newitem, Prop_Data, "m_iSubType", 3);
+			SetEntProp(newitem, Prop_Send, "m_aBuildableObjectTypes", 0, _, 0);
+			SetEntProp(newitem, Prop_Send, "m_aBuildableObjectTypes", 0, _, 1);
+			SetEntProp(newitem, Prop_Send, "m_aBuildableObjectTypes", 0, _, 2);
+			SetEntProp(newitem, Prop_Send, "m_aBuildableObjectTypes", 1, _, 3);
+		}
+	case 998:
+		{
+			SetEntData(newitem, FindSendPropInfo(entclass, "m_nChargeResistType"), GetRandomInt(0,2));
+		}
+	case 1071:
+		{
+			TF2Attrib_SetByName(newitem, "item style override", 0.0);
+			TF2Attrib_SetByName(newitem, "loot rarity", 1.0);		
+			TF2Attrib_SetByName(newitem, "turn to gold", 1.0);
+
+			DispatchSpawn(newitem);
+			EquipPlayerWeapon(client, newitem);
+
+			char itemname[64];
+			TF2Econ_GetItemName(itemindex, itemname, sizeof(itemname));
+			PrintToChat(client, "%N received item %d (%s)", client, itemindex, itemname);
+			
+			return newitem; 
+		}
+	}
+
+	if(quality == 9 || warpaint == 1) //self made quality, internally used for australium items
+	{
+		TF2Attrib_SetByName(newitem, "is australium item", 1.0);
+		TF2Attrib_SetByName(newitem, "item style override", 1.0);
+		SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 11);		
+	}
+
+	if (warpaint > 1)
+	{
+		TF2Attrib_SetByDefIndex(newitem, 834, view_as<float>(warpaint));
+		SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 15);		
+	}
+
+	if(quality == 11) //strange quality
+	{
+		/*if (GetRandomInt(1,15) == 1)
+		{
+			TF2Attrib_SetByDefIndex(newitem, 2025, 1.0);
+		}
+		else if (GetRandomInt(1,15) == 2)
+		{
+			TF2Attrib_SetByDefIndex(newitem, 2025, 2.0);
+			TF2Attrib_SetByDefIndex(newitem, 2014, GetRandomInt(1,7) + 0.0);
+		}
+		else if (GetRandomInt(1,15) == 3)
+		{
+			TF2Attrib_SetByDefIndex(newitem, 2025, 3.0);
+			TF2Attrib_SetByDefIndex(newitem, 2014, GetRandomInt(1,7) + 0.0);
+			TF2Attrib_SetByDefIndex(newitem, 2013, GetRandomInt(2002,2008) + 0.0);
+		}*/
+		TF2Attrib_SetByDefIndex(newitem, 214, view_as<float>(GetRandomInt(0, 9000)));
+	}
+	
+	if (quality == 15)
+	{
+		switch(itemindex)
+		{
+		case 30665, 30666, 30667, 30668:
+			{
+				TF2Attrib_RemoveByDefIndex(newitem, 725);
+			}
+		default:
+			{
+				TF2Attrib_SetByDefIndex(newitem, 725, GetRandomFloat(0.0,1.0));
+			}
+		}
+	}
+
+	if (effect > 0 && warpaint == 0)
+	{
+		SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 5);	
+		if (effect == 999)
+		{
+			TF2Attrib_SetByDefIndex(newitem, 134, GetRandomInt(1,223) + 0.0);
+		}
+		else
+		{
+			TF2Attrib_SetByDefIndex(newitem, 134, effect + 0.0);
+		}
+	}
+	
+	if(weaponSlot < 2)
+	{
+		TF2Attrib_SetByDefIndex(newitem, 725, 0.0);
+	}
+
+	// Applying killstreak attributes to spawned weapon does not work, must re-apply after weapon is created.
+	//DataPack entinfo;
+	//CreateDataTimer(5.0, FixKillstreak, entinfo);
+	//entinfo.WriteCell(client);
+	//entinfo.WriteCell(weaponSlot);
+	//entinfo.WriteCell(kstier);
+	//entinfo.WriteCell(kssheen);
+	//entinfo.WriteCell(kseffect);
+
+	/*// not working properly?
+	if(kstier > 0)
+		TF2Attrib_SetByDefIndex(newitem, 2025, kstier + 0.0);
+
+	// not working properly?
+	if(kssheen > 0)
+		TF2Attrib_SetByDefIndex(newitem, 2014, kssheen + 0.0);
+
+	// not working properly?
+	if(kseffect > 0)
+		TF2Attrib_SetByDefIndex(newitem, 2013, kseffect + 0.0);*/
+	
+	DispatchSpawn(newitem);
+
+	EquipPlayerWeapon(client, newitem);
+	
+	if (IsPaintKitable(itemindex))
+	{
+		if (weaponSlot < 2 || StrEqual(classname, "tf_weapon_knife"))
+		{
+			if (warpaint < 2 || effect < 1)
+			{
+				SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 5);
+				TF2_SwitchtoSlot(client, weaponSlot);
+				int iRand = GetRandomUInt(1,4);
+				if (iRand == 1)
+				{
+					TF2Attrib_SetByDefIndex(newitem, 134, 701.0);	
+				}
+				else if (iRand == 2)
+				{
+					TF2Attrib_SetByDefIndex(newitem, 134, 702.0);	
+				}	
+				else if (iRand == 3)
+				{
+					TF2Attrib_SetByDefIndex(newitem, 134, 703.0);	
+				}
+				else if (iRand == 4)
+				{
+					TF2Attrib_SetByDefIndex(newitem, 134, 704.0);	
+				}
+			}
+		}
+		if (effect > 0)
+		{
+			switch(effect)
+			{
+			case 701:
+				{
+					SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 5);
+					TF2_SwitchtoSlot(client, weaponSlot);
+					TF2Attrib_SetByDefIndex(newitem, 134, 701.0);	
+				}
+			case 702:
+				{
+					SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 5);
+					TF2_SwitchtoSlot(client, weaponSlot);
+					TF2Attrib_SetByDefIndex(newitem, 134, 702.0);	
+				}
+			case 703:
+				{
+					SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 5);
+					TF2_SwitchtoSlot(client, weaponSlot);
+					TF2Attrib_SetByDefIndex(newitem, 134, 703.0);	
+				}
+			case 704:
+				{
+					SetEntData(newitem, FindSendPropInfo(entclass, "m_iEntityQuality"), 5);
+					TF2_SwitchtoSlot(client, weaponSlot);
+					TF2Attrib_SetByDefIndex(newitem, 134, 704.0);	
+				}				
+			default:
+				{
+					PrintToChat(client, "Invalid weapon effect. Valid effects are: 701, 702, 703, or 704");
+				}
+			}
+		}
+	}
+
+	if (StrEqual(classname, "tf_weapon_scattergun"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 6);
+		SetNewAmmo(client, weaponSlot, 32);
+	}
+	if (StrEqual(classname, "tf_weapon_shortstop") || StrEqual(classname, "tf_weapon_pep_brawler_blaster"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 4);
+		SetNewAmmo(client, weaponSlot, 32);
+	}
+	if (StrEqual(classname, "tf_weapon_pistol"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 12);
+		SetNewAmmo(client, weaponSlot, 36);
+	}
+	if (StrContains(classname, "tf_weapon_shotgun") != -1)
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 6);
+		SetNewAmmo(client, weaponSlot, 32);
+	}	
+	if (StrEqual(classname, "tf_weapon_handgun_scout_secondary"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 12);
+		SetNewAmmo(client, weaponSlot, 36);
+	}		
+	if (StrEqual(classname, "tf_weapon_rocketlauncher") || StrEqual(classname, "tf_weapon_rocketlauncher_directhit") || StrEqual(classname, "tf_weapon_rocketlauncher_airstrike"))
+	{
+		if (itemindex == 228)
+		{
+			SetEntProp(newitem, Prop_Data, "m_iClip1", 3);
+			SetNewAmmo(client, weaponSlot, 20);		
+		}
+		else
+		{
+			SetEntProp(newitem, Prop_Data, "m_iClip1", 4);
+			SetNewAmmo(client, weaponSlot, 20);
+		}
+	}
+	if (StrEqual(classname, "tf_weapon_minigun") || StrEqual(classname, "tf_weapon_flamethrower"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 200);
+	}
+	if (StrEqual(classname, "tf_weapon_rocketlauncher_fireball"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 40);
+	}
+	if (StrEqual(classname, "tf_weapon_grenadelauncher"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 4);
+		SetNewAmmo(client, weaponSlot, 16);
+	}
+	if (StrEqual(classname, "tf_weapon_pipebomblauncher"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 8);
+		SetNewAmmo(client, weaponSlot, 24);
+	}
+	if (StrEqual(classname, "tf_weapon_syringegun_medic"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 40);
+		SetNewAmmo(client, weaponSlot, 150);
+	}
+	if (StrEqual(classname, "tf_weapon_syringegun_medic"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 40);
+		SetNewAmmo(client, weaponSlot, 150);
+	}
+	if (StrEqual(classname, "tf_weapon_crossbow"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 1);
+		SetNewAmmo(client, weaponSlot, 38);
+	}
+	if (StrEqual(classname, "tf_weapon_sniperrifle") || StrEqual(classname, "tf_weapon_sniperrifle_decap") || StrEqual(classname, "tf_weapon_sniperrifle_classic"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 25);
+	}	
+	if (StrEqual(classname, "tf_weapon_compound_bow"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 1);
+		SetNewAmmo(client, weaponSlot, 25);
+	}
+	if (StrEqual(classname, "tf_weapon_smg"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 25);
+		SetNewAmmo(client, weaponSlot, 75);
+	}
+	if (StrEqual(classname, "tf_weapon_charged_smg"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 20);
+		SetNewAmmo(client, weaponSlot, 75);
+	}
+	if (StrEqual(classname, "tf_weapon_revolver"))
+	{
+		SetEntProp(newitem, Prop_Data, "m_iClip1", 6);
+		SetNewAmmo(client, weaponSlot, 24);
+	}
+	
+	TF2_SwitchtoSlot(client, 2);
+	TF2_SwitchtoSlot(client, 0);	
+
+	char itemname[64];
+	TF2Econ_GetItemName(itemindex, itemname, sizeof(itemname));
+	PrintToChat(client, "%N received item %d, %s, warpaint: %i, effect: %i", client, itemindex, itemname, warpaint, effect);
+	
+	return newitem;
 } 
+
+int GetRandomUInt(int min, int max)
+{
+	return RoundToFloor(GetURandomFloat() * (max - min + 1)) + min;
+}
+
+void TF2_SwitchtoSlot(int client, int slot)
+{
+	if (slot >= 0 && slot <= 5 && IsClientInGame(client) && IsPlayerAlive(client))
+	{
+		char wepclassname[64];
+		int wep = GetPlayerWeaponSlot(client, slot);
+		if (wep > MaxClients && IsValidEdict(wep) && GetEdictClassname(wep, wepclassname, sizeof(wepclassname)))
+		{
+			FakeClientCommandEx(client, "use %s", wepclassname);
+			SetEntPropEnt(client, Prop_Send, "m_hActiveWeapon", wep);
+		}
+	}
+}
+
+void SetNewAmmo(int client, int wepslot, int newAmmo)
+{
+	int weapon = GetPlayerWeaponSlot(client, wepslot);
+	if (!IsValidEntity(weapon)) return;
+	int type = GetEntProp(weapon, Prop_Send, "m_iPrimaryAmmoType");
+	if (type < 0 || type > 31) return;
+	SetEntProp(client, Prop_Send, "m_iAmmo", newAmmo, _, type);	
+}
