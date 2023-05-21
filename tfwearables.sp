@@ -102,7 +102,7 @@ Handle MeleeKillstreakEffectCookie = null;
 
 ConVar RegeneratePlayer;
 ConVar g_cServerLogging;
-ConVar g_cJailbreakCompat;
+// ConVar g_cJailbreakCompat;
 
 // Thanks 404
 public const int g_iPaintKitable[45] =  {
@@ -169,7 +169,7 @@ public void OnPluginStart()
 	CreateConVar("tf_wearables_version", PLUGIN_VERSION, "Wearables Version (Do not touch).", FCVAR_NOTIFY | FCVAR_REPLICATED);
 	RegeneratePlayer = CreateConVar("sm_wearables_rg", "0", "Regenerate player on wearable update?", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	g_cServerLogging = CreateConVar("sm_wearables_logging", "0", "Log debug outputs to server console?", FCVAR_NOTIFY, true, 0.0, true, 1.0);
-	g_cJailbreakCompat = CreateConVar("sm_wearables_jb", "0", "Add specific checks to ensure no interference with Scag's TF2 Jailbreak plugin.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
+	// g_cJailbreakCompat = CreateConVar("sm_wearables_jb", "0", "Add specific checks to ensure no interference with Scag's TF2 Jailbreak plugin.", FCVAR_NOTIFY, true, 0.0, true, 1.0);
 	
 	// These cookies are stale, gross.
 	UnusualTauntCookie = RegClientCookie("UnusualTauntID", "A cookie for reading the saved Unusual Taunt ID", CookieAccess_Private); // Make a client cookie, make sure cookie cannot be written over by client, by making it private.
