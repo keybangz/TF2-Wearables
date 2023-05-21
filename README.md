@@ -23,9 +23,9 @@ To be added soon.
 
 ## Dependencies
 
-TF2Items - https://forums.alliedmods.net/showthread.php?s=9d06c121e0d39d2dd87bf0ef107c763d&t=115100
-TF2Attributes - https://github.com/FlaminSarge/tf2attributes
-TF Econ Data - https://github.com/nosoop/SM-TFEconData
+- TF2Items - https://forums.alliedmods.net/showthread.php?s=9d06c121e0d39d2dd87bf0ef107c763d&t=115100
+- TF2Attributes - https://github.com/FlaminSarge/tf2attributes
+- TF Econ Data - https://github.com/nosoop/SM-TFEconData
 
 ## Installation
 
@@ -40,6 +40,7 @@ MoreColors - https://forums.alliedmods.net/showthread.php?t=185016
 
 - Rewrite plugin and utilize TF Econ Data a lot more to provide easier ways to retrieve & utilize in-game attributes
 - Add commands which allow players to apply wearable attributes without the use of the menu.
+- Fix particle system overload. (Presumably because some particles are not temporary entities & instead stay in server memory until map change.)
 
 ## Credits
 
