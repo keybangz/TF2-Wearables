@@ -34,7 +34,7 @@ Simply compile and place in your Sourcemod plugins folder, this plugin does not 
 
 ## Compile Requirements
 
-MoreColors - https://forums.alliedmods.net/showthread.php?t=185016
+- MoreColors - https://forums.alliedmods.net/showthread.php?t=185016
 
 ## TODO
 
@@ -44,7 +44,9 @@ MoreColors - https://forums.alliedmods.net/showthread.php?t=185016
 
 ## Credits
 
-404 - Helping me with the list of weapons available to have warpaints applied.
-asherkin - For the creation of TF2Items
-FlaminSarge - For the creation of TF2Attributes
-nosoop - For the creation of TF Econ Data
+- 404 - Helping me with the list of weapons available to have warpaints applied.
+- asherkin - For the creation of TF2Items
+- FlaminSarge - For the creation of TF2Attributes
+- nosoop - For the creation of TF Econ Data
+
+Everyone else who may have helped me during the writing of this plugin, I do not remember every little detail! If you wish to be added to the list, feel free to open a PR.
