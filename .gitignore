@@ -1,4 +1,7 @@
 *.exe
 *.dat
 include/
-compiled/
+
+spcomp.exe
+compile.exe
+compile.dat
