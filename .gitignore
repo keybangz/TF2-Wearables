@@ -1,3 +1,4 @@
 *.exe
-include/*.*
-compiled/*.*
+*.dat
+include/
+compiled/
