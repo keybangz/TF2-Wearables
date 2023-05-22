@@ -19,7 +19,9 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 ## Preview Images
 
-To be added soon.
+![20230522123527_1](https://github.com/cigzag/TF2-Wearables/assets/23132897/5acf03a5-4316-41e9-861e-f6966fd583de)
+
+![20230522123541_1](https://github.com/cigzag/TF2-Wearables/assets/23132897/d4d270eb-8bbc-4d5d-8ca9-5d4bc0414a79)
 
 ## Dependencies
 
