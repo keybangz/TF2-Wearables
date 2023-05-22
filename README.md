@@ -43,6 +43,7 @@ Simply place the compiled smx into your Sourcemod plugins folder, this plugin do
 - Rewrite plugin and utilize TF Econ Data a lot more to provide easier ways to retrieve & utilize in-game attributes
 - Add commands which allow players to apply wearable attributes without the use of the menu.
 - Fix particle system overload. (Presumably because some particles are not temporary entities & instead stay in server memory until map change.)
+- Fix invalid client checks from datapack timers
 
 ## Credits
 
