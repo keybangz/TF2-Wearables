@@ -29,7 +29,7 @@ To be added soon.
 
 ## Installation
 
-Simply compile and place in your Sourcemod plugins folder, this plugin does not require external gamedata or anything of the sort.
+Simply place the compiled smx into your Sourcemod plugins folder, this plugin does not require external gamedata or anything of the sort.
 (sourcemod/plugins/*)
 
 ## Compile Requirements
