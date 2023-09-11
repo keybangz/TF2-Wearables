@@ -176,7 +176,6 @@ public void OnPluginStart() {
 
     // In-game events the plugin should listen to.
     // If other plugins are manually invoking these events, THESE EVENTS WILL FIRE. (Bad practice to manually invoke events anyways)
-    HookEvent("player_death", OnPlayerDeath, EventHookMode_Pre); // We want to get the earliest frame of OnPlayerDeath for easy cleanup.
     HookEvent("post_inventory_application", OnResupply); // When player touches resupply locker, respawns or manually invokes a refresh of player items.
 
     // Admin Commands
@@ -329,17 +328,6 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast) {
         TF2Attrib_SetByDefIndex(melee, 2013, float(player.GetKillstreakEffectId(melee)));
 
     // Cleanup particles plugin has created, and reapply if selections have been updated.
-    return Plugin_Handled;
-}
-
-// Here we will clean up manual particles created such as ones from the unusual taunt menu.
-public Action OnPlayerDeath(Event event, const char[] name, bool dontBroadcast) {
-    int client = GetClientOfUserId(GetEventInt(event, "userid"));
-	
-    if(!IsClientInGame(client))
-        return Plugin_Handled;
-
-    // Cleanup particles plugin has created.
     return Plugin_Handled;
 }
 
