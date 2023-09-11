@@ -447,31 +447,33 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 MenuCreate(client, killStreakEffectMenu, "Killstreak Effects Menu");
             }
 
+            // After selecting a killstreak attribute, player must select which weapon slot to apply the effect too.
             if(StrEqual(info, "Primary")) {
                 int slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
 
                 if(!IsValidEntity(slot))
                     return -1;
 
-                if(tTier[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2025, float(tTier[client]));
-                    player.SetKillstreakTierId(tTier[client], slot); // Update player killstreak tier effect to be used elsewhere.
+                if(tTier[client] > 0) { // If temporary variable has been set, update values.
+                    TF2Attrib_SetByDefIndex(slot, 2025, float(tTier[client])); // Updates killstreak tier to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakTierId(tTier[client], slot); // Update player killstreak tier to be used elsewhere.
                 }
 
                 if(tSheen[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2014, float(tSheen[client]));
-                    player.SetKillstreakSheenId(tSheen[client], slot); // Update player killstreak sheen effect to be used elsewhere.
+                    TF2Attrib_SetByDefIndex(slot, 2014, float(tSheen[client])); // Updates killstreak sheen to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakSheenId(tSheen[client], slot); // Update player killstreak sheen to be used elsewhere.
                 }
 
                 if(tEffect[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client]));
-                    player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak sheen effect to be used elsewhere.
+                    TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client])); // Updates killstreak effect to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak effect to be used elsewhere.
                 }
                 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
             }
 
+            // If player chose second weapon slot
             if(StrEqual(info, "Secondary")) {
                 int slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
 
@@ -479,24 +481,25 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     return -1;
 
                 if(tTier[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2025, float(tTier[client]));
+                    TF2Attrib_SetByDefIndex(slot, 2025, float(tTier[client])); // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot); // Update player killstreak tier effect to be used elsewhere.
                 }
 
                 if(tSheen[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2014, float(tSheen[client]));
-                    player.SetKillstreakSheenId(tSheen[client], slot); // Update player killstreak sheen effect to be used elsewhere.
+                    TF2Attrib_SetByDefIndex(slot, 2014, float(tSheen[client])); // Updates killstreak sheen to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakSheenId(tSheen[client], slot); // Update player killstreak sheen to be used elsewhere.
                 }
 
                 if(tEffect[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client]));
-                    player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak sheen effect to be used elsewhere.
+                    TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client])); // Updates killstreak effect to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak effect to be used elsewhere.
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
             }
 
+            // If player chose melee weapon slot
             if(StrEqual(info, "Melee")) {
                 int slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 
@@ -504,18 +507,18 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     return -1;
 
                 if(tTier[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2025, float(tTier[client]));
-                    player.SetKillstreakTierId(tTier[client], slot); // Update player killstreak tier effect to be used elsewhere.
+                    TF2Attrib_SetByDefIndex(slot, 2025, float(tTier[client])); // Updates killstreak tier to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakTierId(tTier[client], slot); // Update player killstreak tier to be used elsewhere.
                 }
 
                 if(tSheen[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2014, float(tSheen[client]));
-                    player.SetKillstreakSheenId(tSheen[client], slot); // Update player killstreak sheen effect to be used elsewhere.
+                    TF2Attrib_SetByDefIndex(slot, 2014, float(tSheen[client])); // Updates killstreak sheen to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakSheenId(tSheen[client], slot); // Update player killstreak sheen to be used elsewhere.
                 }
 
                 if(tEffect[client] > 0) {
-                    TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client]));
-                    player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak sheen effect to be used elsewhere.
+                    TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client])); // Updates killstreak effect to temporary value, permanent value used in OnResupply
+                    player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak effect to be used elsewhere.
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
