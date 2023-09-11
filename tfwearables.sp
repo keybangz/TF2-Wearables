@@ -566,7 +566,6 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 // Loop through unusual taunt menu item id list and match display name with item id.
                 // Check if unusualTauntMenu matches selected by player
                 if(StrEqual(info, unusualTauntMenuItems[i])) {
-                    PrintToServer("unusualTaunt: %s", unusualTauntMenuItemIds[i]);
                     // Set unusualTauntMenuId to desired effect by matching index of display name with id.
                     player.SetUnusualTauntEffectId(unusualTauntMenuItemIds[i]);
                     break;
@@ -589,7 +588,7 @@ void AttachParticle(int client, char[] particle) {
         float pos[3]; // Create position vector (x, y, z)
 
         GetEntPropVector(client, Prop_Send, "m_vecOrigin", pos); // Update position vector with default position values 
-        pos[2] += 10; // z axis often points down to map center, point it up a bit.
+        
         TeleportEntity(particleSystem, pos, NULL_VECTOR, NULL_VECTOR); // Teleport entity to new position vectors (All setup to be attached to player)
 
         Format(name, sizeof(name), "target%i", client); // Set target to client which is creating the particle
