@@ -100,14 +100,115 @@ char unusualTauntMenuItems[][] = {
     "Roaring Rockets",
     "Acid Bubbles of Envy",
     "Flammable Bubbles of Attraction",
-    "Poisonous Bubbles of Regret"
+    "Poisonous Bubbles of Regret",
+    "Spooky Night", // May require TempEnt
+    "Ominous Night", // May require TempEnt
+    "Bewitched",
+    "Accursed",
+    "Enchanted",
+    "Static Mist",
+    "Eerie Lightning",
+    "Terrifying Thunder",
+    "Jarate Shock",
+    "Nether Void",
+    "Good-Hearted Goodies",
+    "Wintery Wisp",
+    "Arctic Aurora",
+    "Winter Spirit",
+    "Festive Spirit",
+    "Magical Spirit",
+    "Spectral Escort", // May require TempEnt
+    "Astral Presence", // May require TempEnt
+    "Arcane Assistance (RED)", // May require TempEnt
+    "Arcane Assistance (BLU)", // May require TempEnt
+    "Emerald Allurement", // May require TempEnt
+    "Pyrophoric Personality", // May require TempEnt
+    "Spellbound Aspect", // May require TempEnt
+    "Static Shock", // May require TempEnt
+    "Veno Shock", // May require TempEnt
+    "Toxic Terrors", // May require TempEnt
+    "Arachnid Assault", // May require TempEnt
+    "Creepy Crawlies", // May require TempEnt
+    "Delightful Star", // May require TempEnt
+    "Frosted Star", // May require TempEnt
+    "Apotheosis", 
+    "Ascension", 
+    "Reindoonicorn Rancher (RED)", // May require TempEnt
+    "Reindoonicorn Rancher (BLU)", // May require TempEnt
+    "Twinkling Lights", // May require TempEnt 
+    "Shimmering Lights", // May require TempEnt
+    "Spectral Shackles", // May require TempEnt
+    "Cursed Confinement", // May require TempEnt
+    "Cavalier de Carte (RED)", 
+    "Cavalier de Carte (BLU)",
+    "Hollow Flourish", 
+    "Magic Shuffle",
+    "Vigorous Pulse",
+    "Thundering Spirit",
+    "Galvanic Defiance",
+    "Wispy Halos", // May require TempEnt
+    "Nether Wisps", // May require TempEnt
+    "Aurora Borealis", // May require TempEnt
+    "Aurora Australis", // May require TempEnt
+    "Aurora Polaris", // May require TempEnt
+    "Amethyst Winds", // May require TempEnt
+    "Golden Gusts", // May require TempEnt
+    "Smissmas Swirls (RED)", // May require TempEnt
+    "Smissmas Swirls (BLU)", // May require TempEnt
+    "Minty Cypress",
+    "Pristine Pine",
+    "Sparkly Spruce (RED)",
+    "Sparkly Spruce (BLU)",
+    "Festive Fever (RED)",
+    "Festive Fever (BLU)",
+    "Golden Glimmer",
+    "Frosty Silver",
+    "Glamorous Dazzle (RED)",
+    "Glamorous Dazzle (BLU)",
+    "Sublime Snowstorm",
+    "Marigold Ritual (RED)",
+    "Marigold Ritual (BLU)",
+    "Pungent Poison",
+    "Blazed Brew",
+    "Mysterious Mixture",
+    "Linguistic Deviation",
+    "Aurelian Seal",
+    "Runic Imprisonment (RED)",
+    "Runic Imprisonment (BLU)",
+    "Prismatic Haze",
+    "Rising Ritual (RED)",
+    "Rising Ritual (BLU)",
+    "Bloody Grip (RED)",
+    "Bloody Grip (BLU)",
+    "Toxic Grip",
+    "Infernal Grip",
+    "Death Grip",
+    "Charged Arcane",
+    "Thunderous Rage",
+    "Convulsive Fiery",
+    "Festivized Formation (RED)",
+    "Festivized Formation (BLU)",
+    "Twirling Spirits",
+    "Squash n' Twist",
+    "Midnight Sparklers",
+    "Boundless Blizzard",
+    "Solar Scorched",
+    "Deepsea Rave (RED)",
+    "Deepsea Rave (BLU)",
+    "Blooming Beacon",
+    "Beaming Beacon",
+    "Blazing Beacon",
+    "Floppin' Frenzy",
+    "Pastel Trance (RED)",
+    "Pastel Trance (BLU)",
+    "Wildflower Meadows"
 };
 
 // These are the unusual taunt menu item id's as matched in items_game.txt of TF2
 // REF: https://wiki.teamfortress.com/wiki/Item_schema
 char unusualTauntMenuItemIds[][] = {
     "utaunt_firework_teamcolor_red", // Showstopper (RED)
-    "utaunt_firework_teamcolor_blue", // Showstopper (BLUE)
+    "utaunt_firework_teamcolor_blue", // Showstopper (BLU)
     "utaunt_beams_yellow", // Holy Grail
     "utaunt_disco_party", // '72
     "utaunt_hearts_glow_parent", // Fountain of Delight
@@ -122,7 +223,108 @@ char unusualTauntMenuItemIds[][] = {
     "utaunt_firework_dragon_parent", // Roaring Rockets
     "utaunt_bubbles_glow_green_parent", // Acid Bubbles of Envy
     "utaunt_bubbles_glow_orange_parent", // Flammable Bubbles of Attraction
-    "utaunt_bubbles_glow_purple_parent" // Poisonous Bubbles of Regret
+    "utaunt_bubbles_glow_purple_parent", // Poisonous Bubbles of Regret
+    "utaunt_smoke_moon_parent", // Spooky Night
+    "utaunt_smoke_moon_green_parent", // Ominous Night
+    "utaunt_arcane_purple_parent", // Bewitched
+    "utaunt_arcane_green_parent", // Accursed
+    "utaunt_arcane_yellow_parent", // Enchanted
+    "utaunt_electric_mist_parent", // Static Mist
+    "utaunt_electricity_cloud_parent_WP", // Eerie Lightning
+    "utaunt_electricity_cloud_parent_WB", // Terrifying Thunder
+    "utaunt_electricity_cloud_parent_WY", // Jarate Shock
+    "utaunt_portalswirl_purple_parent", // Nether Void
+    "utaunt_present_parent", // Good-Hearted Goodies
+    "utaunt_snowring_icy_parent", // Wintery Wisp
+    "utaunt_snowring_space_parent", // Arctic Aurora
+    "utaunt_spirit_winter_parent", // Winter Spirit
+    "utaunt_spirit_festive_parent", // Festive Spirit
+    "utaunt_spirit_magical_parent", // Magical Spirit
+    "utaunt_astralbodies_greenorange_parent", // Spectral Escort
+    "utaunt_astralbodies_tealpurple_parent", // Astral Presence
+    "utaunt_astralbodies_teamcolor_red", // Arcane Assistance (RED)
+    "utaunt_astralbodies_teamcolor_blue", // Arcane Assistance (BLU)
+    "utaunt_glowyplayer_green_parent", // Emerald Allurement
+    "utaunt_glowyplayer_orange_parent", // Pyrophoric Personality
+    "utaunt_glowyplayer_purple_parent", // Spellbound Aspect
+    "utaunt_electricity_parent", // Static Shock
+    "utaunt_electricity_purple_parent", // Veno Shock
+    "utaunt_spider_green_parent", // Toxic Terrors
+    "utaunt_spider_orange_parent", // Arachnid Assault
+    "utaunt_spider_purple_parent", // Creepy Crawlies
+    "utaunt_tf2smissmas_tree_parent", // Delightful Star
+    "utaunt_tf2smissmas_tree_parent_w", // Frosted Star
+    "utaunt_spirits_blue_parent", // Apotheosis
+    "utaunt_spirits_purple_parent", // Ascension
+    "utaunt_balloonicorn_reindeer_teamcolor_red", // Reindoonicorn Rancher (RED)
+    "utaunt_balloonicorn_reindeer_teamcolor_blue", // Reindoonicorn Rancher (BLU)
+    "utaunt_twinkling_rgb_parent", // Twinkling Lights
+    "utaunt_twinkling_goldsilver_parent", // Shimmering Lights
+    "utaunt_chain_green_parent", // Spectral Shackles
+    "utaunt_chain_purple_parent", // Cursed Confinement
+    "utaunt_tarotcard_teamcolor_red", // Cavalier de Carte (RED)
+    "utaunt_tarotcard_teamcolor_blue", // Cavalier de Carte (BLU)
+    "utaunt_tarotcard_orange_parent", // Hollow Flourish
+    "utaunt_tarotcard_purple_parent", // Magic Shuffle
+    "utaunt_elebound_green_parent", // Vigorous Pulse
+    "utaunt_elebound_purple_parent", // Thundering Spirit
+    "utaunt_elebound_yellow_parent", // Galvanic Defiance
+    "utaunt_wispy_parent_g", // Wispy Halos
+    "utaunt_wispy_parent_p", // Nether Wisps
+    "utaunt_auroraglow_green_parent", // Aurora Borealis
+    "utaunt_auroraglow_orange_parent", // Aurora Australis
+    "utaunt_auroraglow_purple_parent", // Aurora Polaris
+    "utaunt_snowswirl_purple_parent", // Amethyst Winds
+    "utaunt_snowswirl_yellow_parent", // Golden Gusts
+    "utaunt_snowswirl_teamcolor_red", // Smissmas Swirls (RED)
+    "utaunt_snowswirl_teamcolor_blue", // Smissmas Swirls (BLU)
+    "utaunt_treespiral_green_parent", // Minty Cypress
+    "utaunt_treespiral_purple_parent", // Pristine Pine
+    "utaunt_treespiral_teamcolor_red", // Sparkly Spruce (RED)
+    "utaunt_treespiral_teamcolor_blue", // Sparkly Spruce (BLU)
+    "utaunt_gifts_teamcolor_red", // Festive Fever (RED)
+    "utaunt_gifts_teamcolor_blue", // Festive Fever (BLU)
+    "utaunt_glitter_parent_gold", // Golden Glimmer
+    "utaunt_glitter_parent_silver", // Frosty Silver
+    "utaunt_glitter_teamcolor_red", // Glamorous Dazzle (RED)
+    "utaunt_glitter_teamcolor_blue", // Glamorous Dazzle (BLU)
+    "utaunt_ice_parent", // Sublime Snowstorm
+    "utaunt_marigoldritual_teamcolor_red", // Marigold Ritual (RED)
+    "utaunt_marigoldritual_teamcolor_blue", // Marigold Ritual (BLU)
+    "utaunt_poison_parent_green", // Pungent Poison
+    "utaunt_poison_parent_orange", // Blazed Brew
+    "utaunt_poison_parent_purple", // Mysterious Mixture
+    "utaunt_runeprison_green_parent", // Linguistic Deviation
+    "utaunt_runeprison_yellow_parent", // Aurelian Seal
+    "utaunt_runeprison_teamcolor_red", // Runic Imprisonment (RED)
+    "utaunt_runeprison_teamcolor_blue", // Runic Imprisonment (BLU)
+    "utaunt_prismatichaze_parent", // Prismatic Haze
+    "utaunt_risingsprit_teamcolor_red", // Rising Ritual (RED)
+    "utaunt_risingsprit_teamcolor_blue", // Rising Ritual (BLU)
+    "utaunt_hands_teamcolor_red", // Bloody Grip (RED)
+    "utaunt_hands_teamcolor_blue", // Bloody Grip (BLU)
+    "utaunt_hands_green_parent", // Toxic Grip
+    "utaunt_hands_orange_parent", // Infernal Grip
+    "utaunt_hands_purple_parent", // Death Grip
+    "utaunt_storm_parent_g", // Charged Arcane
+    "utaunt_storm_parent_k", // Thunderous Rage
+    "utaunt_storm_parent_o", // Convulsive Fiery
+    "utaunt_festivelights_teamcolor_red", // Festivized Formation (RED)
+    "utaunt_festivelights_teamcolor_blue", // Festivized Formation (BLU)
+    "utaunt_glow_spirit_parent_cr", // Twirling Spirits
+    "utaunt_glow_spirit_parent_og", // Squash n' Twist
+    "utaunt_glow_spirit_parent_pp", // Midnight Sparklers
+    "utaunt_snowflakesaura_parent", // Boundless Blizzard
+    "utaunt_sun_sand_rays_parent", // Solar Scorched
+    "utaunt_undersea_teamcolor_red", // Deepsea Rave (RED)
+    "utaunt_undersea_teamcolor_blue", // Deepsea Rave (BLU)
+    "utaunt_lavalamp_green_parent", // Blooming Beacon
+    "utaunt_lavalamp_purple_parent", // Beaming Beacon
+    "utaunt_lavalamp_yellow_parent", // Blazing Beacon
+    "utaunt_fish_parent", // Floppin' Frenzy
+    "utaunt_rainbow_teamcolor_red", // Pastel Trance (RED)
+    "utaunt_rainbow_teamcolor_blue", // Pastel Trance (BLU)
+    "utaunt_wild_meadows_parent" // Wildflower Meadows
 };
 
 // All possible menus which can be created, I have given them an ID order of +1 to keep it simple.
@@ -230,7 +432,7 @@ public void DatabaseHandler(Database db, const char[] error, any data) {
     // meleeSheen - Melee weapon sheen selected by player
     // meleeEffect - Melee weapon effect selected by player.
     // unusualTauntId - Unusual taunt effect selected by player.
-    FormatEx(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (id int(11) NOT NULL AUTO_INCREMENT, steamid varchar(32) UNIQUE, primaryTier int(11), primarySheen int(11), primaryEffect int(11), secondaryTier int(11), secondarySheen int(11), secondaryEffect int(11), meleeTier int(11), meleeSheen int(11), meleeEffect int(11), unusualTauntId varchar(32), PRIMARY KEY (id))", buffer);
+    FormatEx(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (id int(11) NOT NULL AUTO_INCREMENT, steamid varchar(32) UNIQUE, primaryTier int(11), primarySheen int(11), primaryEffect int(11), secondaryTier int(11), secondarySheen int(11), secondaryEffect int(11), meleeTier int(11), meleeSheen int(11), meleeEffect int(11), unusualTauntId varchar(64), PRIMARY KEY (id))", buffer);
     PrintToServer("WEARABLES CONNECT QUERY: %s", query);
     WearablesDB.Query(SQLError, query); // Query to SQL error callback, since we do nothing with data when creating table.
 }
@@ -432,19 +634,23 @@ public void TF2_OnConditionAdded(int client, TFCond condition) {
         refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
         pack.WriteCell(client);
         pack.WriteString(effect[client]);
-    } else if(StrEqual(effect[client], "utaunt_firework_teamcolor_blue")) {
+    } else if(StrEqual(effect[client], "utaunt_firework_teamcolor_blue")) { // Showstopper (BLU) expires every 2.6 seconds according to latest items_game.txt
         refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
         pack.WriteCell(client);
         pack.WriteString(effect[client]);
-    } else if(StrEqual(effect[client], "utaunt_lightning_parent")) {
+    } else if(StrEqual(effect[client], "utaunt_lightning_parent")) { // Mega Strike expires every 0.9 seconds according to latest items_game.txt
         refireTimer[client] = CreateDataTimer(0.9, HandleRefire, pack, TIMER_REPEAT);
+        pack.WriteCell(client);
+        pack.WriteString(effect[client]);
+    } else if(StrEqual(effect[client], "utaunt_firework_dragon_parent")) { // Roaring Rockets expires every 5.25 seconds according to latest items_game.txt
+        refireTimer[client] = CreateDataTimer(5.25, HandleRefire, pack, TIMER_REPEAT);
         pack.WriteCell(client);
         pack.WriteString(effect[client]);
     }
 }
 
 // HandleRefire
-
+// Timer callback handled per client to reissue any unusual taunt effects which have an expiry time.
 public Action HandleRefire(Handle timer, DataPack pack) {
     char buffer[32]; // Unusual taunt effect passed through
     int client; // Client passed through
@@ -808,6 +1014,9 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 
 // AttachParticle - Used to manually create and attach particles to player.
 void AttachParticle(int client, char[] particle) {
+    // Here we will implement Temporary Entity system for particles which either 1. Don't disappear when the parent entity is killed or 2. Don't follow player model body pattern like they should in official taunts.
+    // REF: https://wiki.alliedmods.net/Temp_Entity_Lists_(Source)
+    
     // Create info_particle_system entity
     // REF: https://developer.valvesoftware.com/wiki/Info_particle_system
     int particleSystem = CreateEntityByName("info_particle_system");
@@ -832,6 +1041,13 @@ void AttachParticle(int client, char[] particle) {
         SetVariantString(""); // Ensure no more variant strings are being sent to cause issues
 
         ActivateEntity(particleSystem); // Make the particle start doing it's thing!
+
+        SetEntPropEnt(particleSystem, Prop_Send, "m_hOwnerEntity", client);
+        char addoutput[64]; 
+        Format(addoutput, sizeof(addoutput), "OnUser1 !self:kill::10:1");
+        SetVariantString(addoutput);
+        AcceptEntityInput(particleSystem, "AddOutput");
+        AcceptEntityInput(particleSystem, "FireUser1");
         AcceptEntityInput(particleSystem, "start"); // Same thing as above essentially, some particles don't listen to ActivateEntity
 
         particleEntity[client] = particleSystem; // Set particle entity client picked with newly created particle.
@@ -839,16 +1055,17 @@ void AttachParticle(int client, char[] particle) {
 }
 
 // DeleteParticle - Deletes particle entity when called
-void DeleteParticle(int particle)
-{
+void DeleteParticle(int particle) {
 	if (IsValidEntity(particle)) // If the particle exists
 	{
 		char classname[64]; 
 		GetEdictClassname(particle, classname, sizeof(classname)); // Store classname of particle entity grabbed, (this case: info_particle_system)
 		if (StrEqual(classname, "info_particle_system", false)) // Check it
 		{
-			AcceptEntityInput(particle, "DestroyImmediately"); // Some particles don't disappear without this
-			RemoveEdict(particle); // Remove it from the server to reduce entity count.
+            AcceptEntityInput(particle, "Stop"); // We're trying our best to get rid of stubborn particles.
+            AcceptEntityInput(particle, "DestroyImmediately"); // Some particles don't disappear without this
+            AcceptEntityInput(particle, "Kill"); // Hotfix to destroy some particles from server on next game frame.
+            RemoveEdict(particle); // Remove it from the server to reduce entity count.
 		}
 	}
 }
