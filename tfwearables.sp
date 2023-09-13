@@ -384,20 +384,24 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
     }
 }
 
+// UpdateWearables() - Responsible for updating effects per player to the database.
 void UpdateWearables(int client, char[] steamid) {
     char query[512];
     char buffer[256];
 
     Player player = Player(client); // Initalize player methodmap
 
+    // Since we are working off of player slots, the player must be alive when we update the database.
     int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
     int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
     int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 
     char effect[MAXPLAYERS+1][64]; // String to store current unusual taunt effect into
-    player.GetUnusualTauntEffectId(effect[client], sizeof(effect));
+    player.GetUnusualTauntEffectId(effect[client], sizeof(effect)); // Store unusual taunt effect to buffer to use below.
 
     cTableName.GetString(buffer, sizeof(buffer));
+    // This formatting part is a little ugly, here's a quick rundown.
+    // Updates the players selected effect in the database by grabbing the values from our Player methodmap.
     FormatEx(query, sizeof(query), "UPDATE %s SET primaryTier='%i', primarySheen='%i', primaryEffect='%i', secondaryTier='%i', secondarySheen='%i', secondaryEffect='%i', meleeTier='%i', meleeSheen='%i', meleeEffect='%i', unusualTauntId='%s' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary), player.GetKillstreakTierId(secondary), player.GetKillstreakSheenId(secondary), player.GetKillstreakEffectId(secondary), player.GetKillstreakTierId(melee), player.GetKillstreakSheenId(melee), player.GetKillstreakEffectId(melee), effect[client], steamid);
     WearablesDB.Query(SQLError, query);
 }
