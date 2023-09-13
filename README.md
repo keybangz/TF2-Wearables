@@ -16,8 +16,8 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 # ConVars
 
-`tf_wearables_enabled: 1/0 (default: 1)` - Enable TF2 wearables plugin?
-`tf_wearables_db: (default: wearables)` - Name of database as inputted in databases.cfg
+`tf_wearables_enabled: 1/0 (default: 1)` - Enable TF2 wearables plugin?\
+`tf_wearables_db: (default: wearables)` - Name of database as inputted in databases.cfg\
 `tf_wearables_table: (default: wearables)` - Name of database table plugin will generate and read/write data from.
 
 ## Preview Images
