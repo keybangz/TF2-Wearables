@@ -8,10 +8,17 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 - Killstreaks Effects: Allow the player to choose the level of killstreak applied to a specific weapon slot in their inventory, and is not bound to the weapon the player has chosen.
 - Unusual Taunts: Allows the player to choose a unusual effect for taunting in-game. (Also known as emoting)
+- MySQL support (Saves players preferences if they disconnect!)
 
 ## Commands
 
 !wearables - Display the wearables menu to the player.
+
+# ConVars
+
+`tf_wearables_enabled: 1/0 (default: 1)` - Enable TF2 wearables plugin?
+`tf_wearables_db: (default: wearables)` - Name of database as inputted in databases.cfg
+`tf_wearables_table: (default: wearables)` - Name of database table plugin will generate and read/write data from.
 
 ## Preview Images
 
@@ -32,8 +39,6 @@ Simply place the compiled smx into your Sourcemod plugins folder, this plugin do
 
 ## TODO
 
-- Add MySQL / SQLite support.
-- Add refire timers for unusual taunts which have an expiry time.
 - Add other wearable options (Weapon unusuals, festive, australiums, etc) // NOTE: Require creating weapon entities and parenting old attributes to display correctly, currently out of scope for project.
 
 ## Credits
