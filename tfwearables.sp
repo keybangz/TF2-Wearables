@@ -21,6 +21,7 @@ int killStreakSheen[MAXPLAYERS+1][MAX_ENTITY_SIZE];
 int killStreakEffect[MAXPLAYERS+1][MAX_ENTITY_SIZE];
 char unusualTauntEffect[MAXPLAYERS+1][64]; // Store selected unusual taunt affect in string array, we will be creating the particle manually and attaching it to the player.
 int particleEntity[MAXPLAYERS+1]; // Used to track current particles created by our plugin, when player no longer needs them, we call DeleteParticle to ensure entity limit is not reached, see above.
+Handle refireTimer[MAXPLAYERS+1]; // Handle to track unusual taunts with an expiry time.
 
 // temporary variables
 // we are gonna use these to keep track of effect per slot in the menu handler
@@ -29,6 +30,8 @@ int particleEntity[MAXPLAYERS+1]; // Used to track current particles created by 
 int tTier[MAXPLAYERS+1];
 int tSheen[MAXPLAYERS+1];
 int tEffect[MAXPLAYERS+1];
+
+Database WearablesDB = null; // Setup database handle we will be using in our plugin.
 
 // In an attempt to keep away from multiple implementations of practically the same code, store main menu options here.
 char wearableMenuItems[][] = {
@@ -162,6 +165,13 @@ int killStreakEffectSel[] = {
     2008 // Hypno Beam
 };
 
+// ConVars
+// These are server side settings which the server administrator can change to help tailor the plugin to their specific use case.
+// Defined ConVars are just wrappers for handles which allow the plugin to manage the state of a ConVar
+ConVar cEnabled; // Is the plugin enabled?
+ConVar cDatabaseName; // Name of database to connect to inside of databases.cfg REF: https://wiki.alliedmods.net/SQL_(SourceMod_Scripting)#Connecting
+ConVar cTableName; // Name of table created / read from inside the database.
+
 public Plugin myinfo =  {
 	name = "[TF2] Wearables", 
 	author = "keybangz", 
@@ -173,6 +183,9 @@ public Plugin myinfo =  {
 public void OnPluginStart() {
     // Version ConVar, used on AlliedModders forum to check count of servers running this plugin.
     CreateConVar("tf_wearables_version", PLUGIN_VERSION, "Wearables Version (Do not touch).", FCVAR_NOTIFY | FCVAR_REPLICATED);
+    cEnabled = CreateConVar("tf_wearables_enabled", "1", "Enable TF2 wearables plugin?", _, true, 0.0, true, 1.0);
+    cDatabaseName = CreateConVar("tf_wearables_db", "wearables", "Name of the database connecting to store player data.", _, false, _, false, _);
+    cTableName = CreateConVar("tf_wearables_table", "wearables", "Name of the table holding the player data in the database.", _, false, _, false, _);
 
     // In-game events the plugin should listen to.
     // If other plugins are manually invoking these events, THESE EVENTS WILL FIRE. (Bad practice to manually invoke events anyways)
@@ -180,13 +193,63 @@ public void OnPluginStart() {
 
     // Admin Commands
     RegAdminCmd("sm_wearables", WearablesCommand, ADMFLAG_RESERVATION, "Shows the wearables menu."); // Translates to /wearables in-game 
+
+    // Setup database connection.
+    char dbname[64];
+    cDatabaseName.GetString(dbname, sizeof(dbname)); // Grab database ConVar string value and store to buffer.
+
+    // Connect to database here.
+    Database.Connect(DatabaseHandler, dbname); // Pass string buffer to connect method.
+}
+
+// Here we will setup the SQL table to store player preferences.
+// GOAL: Support MySQL and SQLite(?)
+public void DatabaseHandler(Database db, const char[] error, any data) {
+    if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
+        return;
+
+    if(db == null) // Ensure databases.cfg settings are correct.
+        LogError("Database failure: %s", error); // If anything fails, report back to server.
+
+    WearablesDB = db; // Set global database handle to newly connected to database set out in databases.cfg
+
+    char query[512]; // Buffer to store query in.
+    char buffer[256]; // Alternative buffer used to store desired ConVar values and use with query.
+
+    cTableName.GetString(buffer, sizeof(buffer));
+    // TABLE LAYOUT
+    // id - incremental id to append to each player
+    // steamid - store unique player SteamID32 REF: https://steamid.io/
+    // primaryTier - Primary weapon tier selected by player
+    // primarySheen - Primary weapon sheen selected by player
+    // primaryEffect - Priamry weapon effect selected by player
+    // secondaryTier - Secondary weapon tier selected by player
+    // secondarySheen - Secondary weapon sheen selected by player
+    // secondaryEffect - Secondary weapon effect selected by player
+    // meleeTier - Melee weapon tier selected by player
+    // meleeSheen - Melee weapon sheen selected by player
+    // meleeEffect - Melee weapon effect selected by player.
+    // unusualTauntId - Unusual taunt effect selected by player.
+    FormatEx(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (id int(11) NOT NULL AUTO_INCREMENT, steamid varchar(32) UNIQUE, primaryTier int(11), primarySheen int(11), primaryEffect int(11), secondaryTier int(11), secondarySheen int(11), secondaryEffect int(11), meleeTier int(11), meleeSheen int(11), meleeEffect int(11), unusualTauntId varchar(32), PRIMARY KEY (id))", buffer);
+    PrintToServer("WEARABLES CONNECT QUERY: %s", query);
+    WearablesDB.Query(SQLError, query); // Query to SQL error callback, since we do nothing with data when creating table.
+}
+
+// SQLError
+// Standard SQL callback to process errors for any queries that are used throughout the plugin, any queries which take and redefine data will have their own callback.
+public void SQLError(Database db, DBResultSet results, const char[] error, any data) {
+    if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
+        return;
+
+    if(results == null)
+        LogError("Query failure: %s", error);
 }
 
 // Our main methodmap, this provides us with all functions required to assign desired effects to the desired player.
 methodmap Player {
-    public Player(int index) { // Constructor of methodmap
-        if(IsClientInGame(index))
-            return view_as<Player>(index); // Will return index of Player entry in methodmap, note this does not reflect the client unless we assign the client to the methodmap first.
+    public Player(int userid) { // Constructor of methodmap
+        if(IsClientInGame(userid))
+            return view_as<Player>(GetClientUserId(userid)); // Will return index of Player entry in methodmap, note this does not reflect the client unless we assign the client to the methodmap first.
         return view_as<Player>(-1); // We want to ensure we hold no null / disconnected players even in our constructor.
     }
     // Apparently this gets overwritten when player entity list ticks over max count
@@ -237,23 +300,114 @@ methodmap Player {
 // We want to organize our code into a methodmap or some sort of structured way to prevent recreation of variables that we don't need.
 // Unlike the previous version, we will be using SQLite or MySQL to store player preferences, this will provide us with a cleaner codebase and remove the hassle of cookie caching and verification.
 
-// Not a hooked event, SourceMod listens for this always, we'll intialize our methodmap and killstreak effects here.
-// TODO: Fetch SQL db effects here.
-public void OnClientPutInServer(int client) {
+// FetchWearables - Used to fetch all data that might be already stored for the player inside the database.
+void FetchWearables(int client, char[] steamid) {
+    int userid = GetClientUserId(client); // Pass through client userid to validate & update player data in handler.
+    char buffer[256]; // Buffer used to store temporary values in FetchWearables
+    char query[256]; // Buffer used to store queries sent to database.
+
+    cTableName.GetString(buffer, sizeof(buffer)); // Grab table name string value
+    FormatEx(query, sizeof(query), "SELECT primaryTier, primarySheen, primaryEffect, secondaryTier, secondarySheen, secondaryEffect, meleeTier, meleeSheen, meleeEffect, unusualTauntId FROM %s WHERE steamid='%s'", buffer, steamid); // Setup query to select effects only if matching steamid.
+    WearablesDB.Query(FetchWearablesHandler, query, userid);
+
+    // If player does not exist in table, add players steamid to table.
+    FormatEx(query, sizeof(query), "INSERT IGNORE INTO %s(steamid) VALUES('%s')", buffer, steamid);
+    WearablesDB.Query(SQLError, query);
+}
+
+// FetchWearablesHandler - Callback used to set wearable effects set by player.
+void FetchWearablesHandler(Database db, DBResultSet results, const char[] error, any data) {
+    int client = 0; // We will need to pass through client with userid.
+
+    if(db == null || results == null || error[0] != '\0') { // If database handle or results are null, log error also check if error buffer has anything stored.
+        LogError("Query failed! error: %s", error);
+        return;
+    }
+
+    char buffer[32]; // Buffer to fetch unusualTauntId's
+
+    // If userid passed to callback is invalid, do nothing.
+    if((client = GetClientOfUserId(data)) == 0)
+        return;
+
+    int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+    int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+    int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
     Player player = Player(client);
 
-    // Initialize values used in plugin
-    // Loop through all weapon slots 0 - 3, this matches definition of killStreakTier, killStreakSheen & killStreakEffect @ top of file.
-    for(int i = 0; i < 3; i++) {
-        player.SetKillstreakTierId(0, i);
-        player.SetKillstreakSheenId(0, i);
-        player.SetKillstreakEffectId(0, i);
+    // Grab row of data provided by SQL query.
+    while(results.FetchRow()) {
+        // Here we've got to check each individual field and check if it's null before attempting to grab or update data.
+        // Goes in order with query, meaning primaryTier = 0, primarySheen = 1, primaryEffect = 2, and so on.
+        // primaryTier
+        if(!SQL_IsFieldNull(results, 0))
+            player.SetKillstreakTierId(results.FetchInt(0), primary);
+
+        // primarySheen
+        if(!SQL_IsFieldNull(results, 1))
+            player.SetKillstreakSheenId(results.FetchInt(1), primary);
+
+        // primaryEffect
+        if(!SQL_IsFieldNull(results, 2))
+            player.SetKillstreakEffectId(results.FetchInt(2), primary);
+
+        // secondaryTier
+        if(!SQL_IsFieldNull(results, 3))
+            player.SetKillstreakTierId(results.FetchInt(3), secondary);
+
+        // secondarySheen
+        if(!SQL_IsFieldNull(results, 4))
+            player.SetKillstreakSheenId(results.FetchInt(4), secondary);
+
+        // secondaryEffect
+        if(!SQL_IsFieldNull(results, 5))
+            player.SetKillstreakEffectId(results.FetchInt(5), secondary);
+
+        // meleeTier
+        if(!SQL_IsFieldNull(results, 6))
+            player.SetKillstreakTierId(results.FetchInt(6), melee);
+
+        // meleeSheen
+        if(!SQL_IsFieldNull(results, 7))
+            player.SetKillstreakSheenId(results.FetchInt(7), melee);
+
+        // meleeEffect
+        if(!SQL_IsFieldNull(results, 8))
+            player.SetKillstreakEffectId(results.FetchInt(8), melee);
+
+        // unusualTauntId
+        if(!SQL_IsFieldNull(results, 9)) {
+            results.FetchString(9, buffer, sizeof(buffer));
+            player.SetUnusualTauntEffectId(buffer);
+        }
     }
+}
+
+void UpdateWearables(int client, char[] steamid) {
+    char query[512];
+    char buffer[256];
+
+    Player player = Player(client); // Initalize player methodmap
+
+    int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+    int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+    int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
+    char effect[MAXPLAYERS+1][64]; // String to store current unusual taunt effect into
+    player.GetUnusualTauntEffectId(effect[client], sizeof(effect));
+
+    cTableName.GetString(buffer, sizeof(buffer));
+    FormatEx(query, sizeof(query), "UPDATE %s SET primaryTier='%i', primarySheen='%i', primaryEffect='%i', secondaryTier='%i', secondarySheen='%i', secondaryEffect='%i', meleeTier='%i', meleeSheen='%i', meleeEffect='%i', unusualTauntId='%s' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary), player.GetKillstreakTierId(secondary), player.GetKillstreakSheenId(secondary), player.GetKillstreakEffectId(secondary), player.GetKillstreakTierId(melee), player.GetKillstreakSheenId(melee), player.GetKillstreakEffectId(melee), effect[client], steamid);
+    WearablesDB.Query(SQLError, query);
 }
 
 // TF2_OnConditionAdded is an event which SourceMod listens to natively, here we can check different player conditions (ex: jumping, taunting, etc etc)
 // Check if player is taunting, if so add desired effect to player.
 public void TF2_OnConditionAdded(int client, TFCond condition) {
+    if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
+        return;
+
     if(!IsClientInGame(client) || !IsPlayerAlive(client)) // Self explanatory
         return;
     
@@ -265,11 +419,48 @@ public void TF2_OnConditionAdded(int client, TFCond condition) {
     player.GetUnusualTauntEffectId(effect[client], sizeof(effect)); // Grab player current unusual effect and store into destination buffer
 
     AttachParticle(client, effect[client]); // Create and attach desired particle effect to player.
+    DataPack pack; // Create a datapack which we will use for refire timings below.
+
+    // Here we will re-attach any particles with an expiry time
+    // I would much rather check the players taunt in the timer handler, however different taunts have different expiry times.
+    // REF: https://wiki.teamfortress.com/wiki/Item_schema
+    if(StrEqual(effect[client], "utaunt_firework_teamcolor_red")) { // Showstopper (RED) expires every 2.6 seconds according to latest items_game.txt
+        refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
+        pack.WriteCell(client);
+        pack.WriteString(effect[client]);
+    } else if(StrEqual(effect[client], "utaunt_firework_teamcolor_blue")) {
+        refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
+        pack.WriteCell(client);
+        pack.WriteString(effect[client]);
+    } else if(StrEqual(effect[client], "utaunt_lightning_parent")) {
+        refireTimer[client] = CreateDataTimer(0.9, HandleRefire, pack, TIMER_REPEAT);
+        pack.WriteCell(client);
+        pack.WriteString(effect[client]);
+    }
+}
+
+// HandleRefire
+
+public Action HandleRefire(Handle timer, DataPack pack) {
+    char buffer[32]; // Unusual taunt effect passed through
+    int client; // Client passed through
+
+    // Datapacks require the data that is written to them be read in the same order it was written to.
+    pack.Reset(); // Reset datapack incase there is data left over.
+    client = pack.ReadCell(); // Get client index passed through
+    pack.ReadString(buffer, sizeof(buffer)); // Get unusual effect passed through.
+
+    AttachParticle(client, buffer); // Attach the particle to player.
+
+    return Plugin_Handled;
 }
 
 // TF2_OnConditionRemoved is an event which SourceMod listens to natively, here we can check if different player conditions are no longer active (ex: jumping, taunting, etc etc)
 // Check if player is no longer taunting and delete desired particle.
 public void TF2_OnConditionRemoved(int client, TFCond condition) {
+    if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
+        return;
+
     if(!IsClientInGame(client))
         return;
     
@@ -280,60 +471,77 @@ public void TF2_OnConditionRemoved(int client, TFCond condition) {
     if(IsValidEntity(particleEntity[client])) {
         DeleteParticle(particleEntity[client]);
     }
+
+    delete refireTimer[client]; // Stop timer from refiring if player is no longer taunting.
 }
 
 // Hooked Events
 
 public Action OnResupply(Event event, const char[] name, bool dontBroadcast) {
+    if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
+        return Plugin_Handled; 
+
     int client = GetClientOfUserId(GetEventInt(event, "userid"));
 	
     if(!IsClientInGame(client))
         return Plugin_Handled;
+
+    // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
+    char steamid[32]; // Buffer to store SteamID32
+    if(!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid))) // Grab player SteamID32, if fails do nothing.
+        return Plugin_Handled;
+
+    FetchWearables(client, steamid); // Fetch the wearable set from the database.
+
+    Player player = Player(client);
 
     // These will be valid entities on resupply due to player has be alive for resupply to take place.
     int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
     int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
     int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 
-    Player player = Player(client);
+    if(!IsValidEntity(primary) || !IsValidEntity(secondary) || !IsValidEntity(melee))
+        return Plugin_Handled;
 
     // Item attribute 2025 is a attribute definition for killstreak tiers
     // Item attribute 2014 is a attribute definition for killstreak sheens
     // Item attribute 2013 is a attribute definition for killstreak effects
-    // REF: https://wiki.teamfortress.com/wiki/List_of_item_attributes 
+    // REF: https://wiki.teamfortress.com/wiki/List_of_item_attributes
 
     // OnResupply, ensure to override default item attributes again with desired attributes.
     // Primary Weapons
     if(player.GetKillstreakTierId(primary) > 0) // Only do if player has selected a killstreak tier
         TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary))); // Updates killstreak tier attribute to selected value
-    else if(player.GetKillstreakSheenId(primary) > 0) 
+    if(player.GetKillstreakSheenId(primary) > 0) 
         TF2Attrib_SetByDefIndex(primary, 2014, float(player.GetKillstreakSheenId(primary)));
-    else if(player.GetKillstreakEffectId(primary) > 0)
+    if(player.GetKillstreakEffectId(primary) > 0)
         TF2Attrib_SetByDefIndex(primary, 2013, float(player.GetKillstreakEffectId(primary)));
 
      // Secondary Weapons
     if(player.GetKillstreakTierId(secondary) > 0) // Only do if player has selected a killstreak tier
         TF2Attrib_SetByDefIndex(secondary, 2025, float(player.GetKillstreakTierId(secondary))); // Updates killstreak tier attribute to selected value
-    else if(player.GetKillstreakSheenId(secondary) > 0) 
+    if(player.GetKillstreakSheenId(secondary) > 0) 
         TF2Attrib_SetByDefIndex(secondary, 2014, float(player.GetKillstreakSheenId(secondary)));
-    else if(player.GetKillstreakEffectId(secondary) > 0)
+    if(player.GetKillstreakEffectId(secondary) > 0)
         TF2Attrib_SetByDefIndex(secondary, 2013, float(player.GetKillstreakEffectId(secondary)));
 
      // Melee Weapons
     if(player.GetKillstreakTierId(melee) > 0) // Only do if player has selected a killstreak tier
         TF2Attrib_SetByDefIndex(melee, 2025, float(player.GetKillstreakTierId(melee))); // Updates killstreak tier attribute to selected value
-    else if(player.GetKillstreakSheenId(melee) > 0) 
+    if(player.GetKillstreakSheenId(melee) > 0) 
         TF2Attrib_SetByDefIndex(melee, 2014, float(player.GetKillstreakSheenId(melee)));
-    else if(player.GetKillstreakEffectId(melee) > 0)
+    if(player.GetKillstreakEffectId(melee) > 0)
         TF2Attrib_SetByDefIndex(melee, 2013, float(player.GetKillstreakEffectId(melee)));
 
-    // Cleanup particles plugin has created, and reapply if selections have been updated.
-    return Plugin_Handled;
+    return Plugin_Continue;
 }
 
 // Command Handlers
 
 public Action WearablesCommand(int client, int args) {
+    if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
+        return Plugin_Handled; 
+
     // Validate client is actually in-game for menu to display
     if(!IsClientInGame(client))
         return Plugin_Handled;
@@ -348,6 +556,9 @@ public Action WearablesCommand(int client, int args) {
 // Switch cases are not fall-through in SourceMod, once a condition is met it will stop the switch at desired case and run block of code.
 // FIXME: Use default: keyword for error handling(?) Not sure if required here, need to test.
 public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitle) {
+    if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
+        return; 
+
     if(!IsClientInGame(client)) // MenuCreate is called multiple times throughout this plugin, the client could potentionally disconnect after the initial menu creation.
         return;
 
@@ -535,6 +746,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if(StrEqual(info, killStreakTierMenuItems[i])) {
                     MenuCreate(client, slotSelectMenu, "Apply to slot: ");
                     tTier[client] = killStreakTierSel[i]+1; // Set our temporary variable to value of our selected killstreak tier.
+                    break;
                 }
             }
 
@@ -545,6 +757,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if(StrEqual(info, killStreakSheenMenuItems[i])) {
                     MenuCreate(client, slotSelectMenu, "Apply to slot: ");
                     tSheen[client] = killStreakSheenSel[i]; // Set our temporary variable to value of our selected killstreak sheen.
+                    break;
                 }
             }
 
@@ -555,6 +768,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if(StrEqual(info, killStreakEffectMenuItems[i])) {
                     MenuCreate(client, slotSelectMenu, "Apply to slot: ");
                     tEffect[client] = killStreakEffectSel[i]; // Set our temporary variable to value of our selected killstreak effect.
+                    break;
                 }
             }
 
@@ -571,9 +785,17 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if(StrEqual(info, unusualTauntMenuItems[i])) {
                     // Set unusualTauntMenuId to desired effect by matching index of display name with id.
                     player.SetUnusualTauntEffectId(unusualTauntMenuItemIds[i]);
+                    MenuCreate(client, wearablesMenu, "Wearables Menu");
                     break;
                 }
             }
+
+            // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
+            char steamid[32]; // Buffer to store SteamID32
+            if(!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid))) // Grab player SteamID32, if fails do nothing.
+                return -1;
+
+            UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
         }
     }
 
