@@ -22,9 +22,9 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 ## Preview Images
 
-![20230522123527_1](https://github.com/cigzag/TF2-Wearables/assets/23132897/5acf03a5-4316-41e9-861e-f6966fd583de)
+![20230914193541_1](https://github.com/keybangz/TF2-Wearables/assets/23132897/739085ff-c348-44e7-b18f-70d8e2093a13)
 
-![20230522123541_1](https://github.com/cigzag/TF2-Wearables/assets/23132897/d4d270eb-8bbc-4d5d-8ca9-5d4bc0414a79)
+![20230914193644_1](https://github.com/keybangz/TF2-Wearables/assets/23132897/a92c6b49-2a62-4085-a833-89339720cf8b)
 
 ## Dependencies
 
@@ -45,6 +45,7 @@ Simply place the compiled smx into your Sourcemod plugins folder, this plugin do
 
 - If server has thirdperson mode plugin, killstreak effects will disappear for client until they switch weapons or respawn. (This does not happen in first person mode).
 - Not sure if above bug affects other clients, have not been able to test.
+- Some unusual taunt effects are broken (Particles will stay in map until mapchange, this happens with TempEnts & attaching `info_particle_system` to player, I have attempted to weed out and remove broken taunt effects, please open a issue if they are any left in.
 
 ## Credits
 
