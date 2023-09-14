@@ -34,8 +34,8 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 ## Installation
 
-Simply place the compiled smx into your Sourcemod plugins folder, this plugin does not require external gamedata or anything of the sort.
-(sourcemod/plugins/*)
+- Place plugin inside `sourcemod/plugins` folder.
+- Add `wearables` MySQL entry to your `databases.cfg` located inside `sourcemod/configs`
 
 ## TODO
 
