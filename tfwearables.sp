@@ -4,6 +4,7 @@
 #include <tf2attributes>
 #include <morecolors>
 #include <clientprefs>
+#include <sdktools>
 
 #pragma newdecls required // Force Transitional Syntax
 #pragma semicolon 1 // Force semicolon mode
@@ -101,8 +102,6 @@ char unusualTauntMenuItems[][] = {
     "Acid Bubbles of Envy",
     "Flammable Bubbles of Attraction",
     "Poisonous Bubbles of Regret",
-    "Spooky Night", // May require TempEnt
-    "Ominous Night", // May require TempEnt
     "Bewitched",
     "Accursed",
     "Enchanted",
@@ -124,8 +123,6 @@ char unusualTauntMenuItems[][] = {
     "Emerald Allurement", // May require TempEnt
     "Pyrophoric Personality", // May require TempEnt
     "Spellbound Aspect", // May require TempEnt
-    "Static Shock", // May require TempEnt
-    "Veno Shock", // May require TempEnt
     "Toxic Terrors", // May require TempEnt
     "Arachnid Assault", // May require TempEnt
     "Creepy Crawlies", // May require TempEnt
@@ -133,12 +130,8 @@ char unusualTauntMenuItems[][] = {
     "Frosted Star", // May require TempEnt
     "Apotheosis", 
     "Ascension", 
-    "Reindoonicorn Rancher (RED)", // May require TempEnt
-    "Reindoonicorn Rancher (BLU)", // May require TempEnt
     "Twinkling Lights", // May require TempEnt 
     "Shimmering Lights", // May require TempEnt
-    "Spectral Shackles", // May require TempEnt
-    "Cursed Confinement", // May require TempEnt
     "Cavalier de Carte (RED)", 
     "Cavalier de Carte (BLU)",
     "Hollow Flourish", 
@@ -168,9 +161,6 @@ char unusualTauntMenuItems[][] = {
     "Sublime Snowstorm",
     "Marigold Ritual (RED)",
     "Marigold Ritual (BLU)",
-    "Pungent Poison",
-    "Blazed Brew",
-    "Mysterious Mixture",
     "Linguistic Deviation",
     "Aurelian Seal",
     "Runic Imprisonment (RED)",
@@ -188,16 +178,7 @@ char unusualTauntMenuItems[][] = {
     "Convulsive Fiery",
     "Festivized Formation (RED)",
     "Festivized Formation (BLU)",
-    "Twirling Spirits",
-    "Squash n' Twist",
-    "Midnight Sparklers",
     "Boundless Blizzard",
-    "Solar Scorched",
-    "Deepsea Rave (RED)",
-    "Deepsea Rave (BLU)",
-    "Blooming Beacon",
-    "Beaming Beacon",
-    "Blazing Beacon",
     "Floppin' Frenzy",
     "Pastel Trance (RED)",
     "Pastel Trance (BLU)",
@@ -224,8 +205,6 @@ char unusualTauntMenuItemIds[][] = {
     "utaunt_bubbles_glow_green_parent", // Acid Bubbles of Envy
     "utaunt_bubbles_glow_orange_parent", // Flammable Bubbles of Attraction
     "utaunt_bubbles_glow_purple_parent", // Poisonous Bubbles of Regret
-    "utaunt_smoke_moon_parent", // Spooky Night
-    "utaunt_smoke_moon_green_parent", // Ominous Night
     "utaunt_arcane_purple_parent", // Bewitched
     "utaunt_arcane_green_parent", // Accursed
     "utaunt_arcane_yellow_parent", // Enchanted
@@ -247,8 +226,6 @@ char unusualTauntMenuItemIds[][] = {
     "utaunt_glowyplayer_green_parent", // Emerald Allurement
     "utaunt_glowyplayer_orange_parent", // Pyrophoric Personality
     "utaunt_glowyplayer_purple_parent", // Spellbound Aspect
-    "utaunt_electricity_parent", // Static Shock
-    "utaunt_electricity_purple_parent", // Veno Shock
     "utaunt_spider_green_parent", // Toxic Terrors
     "utaunt_spider_orange_parent", // Arachnid Assault
     "utaunt_spider_purple_parent", // Creepy Crawlies
@@ -256,12 +233,8 @@ char unusualTauntMenuItemIds[][] = {
     "utaunt_tf2smissmas_tree_parent_w", // Frosted Star
     "utaunt_spirits_blue_parent", // Apotheosis
     "utaunt_spirits_purple_parent", // Ascension
-    "utaunt_balloonicorn_reindeer_teamcolor_red", // Reindoonicorn Rancher (RED)
-    "utaunt_balloonicorn_reindeer_teamcolor_blue", // Reindoonicorn Rancher (BLU)
     "utaunt_twinkling_rgb_parent", // Twinkling Lights
     "utaunt_twinkling_goldsilver_parent", // Shimmering Lights
-    "utaunt_chain_green_parent", // Spectral Shackles
-    "utaunt_chain_purple_parent", // Cursed Confinement
     "utaunt_tarotcard_teamcolor_red", // Cavalier de Carte (RED)
     "utaunt_tarotcard_teamcolor_blue", // Cavalier de Carte (BLU)
     "utaunt_tarotcard_orange_parent", // Hollow Flourish
@@ -291,9 +264,6 @@ char unusualTauntMenuItemIds[][] = {
     "utaunt_ice_parent", // Sublime Snowstorm
     "utaunt_marigoldritual_teamcolor_red", // Marigold Ritual (RED)
     "utaunt_marigoldritual_teamcolor_blue", // Marigold Ritual (BLU)
-    "utaunt_poison_parent_green", // Pungent Poison
-    "utaunt_poison_parent_orange", // Blazed Brew
-    "utaunt_poison_parent_purple", // Mysterious Mixture
     "utaunt_runeprison_green_parent", // Linguistic Deviation
     "utaunt_runeprison_yellow_parent", // Aurelian Seal
     "utaunt_runeprison_teamcolor_red", // Runic Imprisonment (RED)
@@ -311,16 +281,7 @@ char unusualTauntMenuItemIds[][] = {
     "utaunt_storm_parent_o", // Convulsive Fiery
     "utaunt_festivelights_teamcolor_red", // Festivized Formation (RED)
     "utaunt_festivelights_teamcolor_blue", // Festivized Formation (BLU)
-    "utaunt_glow_spirit_parent_cr", // Twirling Spirits
-    "utaunt_glow_spirit_parent_og", // Squash n' Twist
-    "utaunt_glow_spirit_parent_pp", // Midnight Sparklers
     "utaunt_snowflakesaura_parent", // Boundless Blizzard
-    "utaunt_sun_sand_rays_parent", // Solar Scorched
-    "utaunt_undersea_teamcolor_red", // Deepsea Rave (RED)
-    "utaunt_undersea_teamcolor_blue", // Deepsea Rave (BLU)
-    "utaunt_lavalamp_green_parent", // Blooming Beacon
-    "utaunt_lavalamp_purple_parent", // Beaming Beacon
-    "utaunt_lavalamp_yellow_parent", // Blazing Beacon
     "utaunt_fish_parent", // Floppin' Frenzy
     "utaunt_rainbow_teamcolor_red", // Pastel Trance (RED)
     "utaunt_rainbow_teamcolor_blue", // Pastel Trance (BLU)
@@ -624,7 +585,9 @@ public void TF2_OnConditionAdded(int client, TFCond condition) {
     char effect[MAXPLAYERS+1][64]; // String to store current unusual taunt effect into
     player.GetUnusualTauntEffectId(effect[client], sizeof(effect)); // Grab player current unusual effect and store into destination buffer
 
-    AttachParticle(client, effect[client]); // Create and attach desired particle effect to player.
+    // AttachParticle(client, effect[client]); // Create and attach desired particle effect to player.
+    CreateTempParticle(effect[client], client);
+
     DataPack pack; // Create a datapack which we will use for refire timings below.
 
     // Here we will re-attach any particles with an expiry time
@@ -660,7 +623,8 @@ public Action HandleRefire(Handle timer, DataPack pack) {
     client = pack.ReadCell(); // Get client index passed through
     pack.ReadString(buffer, sizeof(buffer)); // Get unusual effect passed through.
 
-    AttachParticle(client, buffer); // Attach the particle to player.
+    // AttachParticle(client, buffer); // Attach the particle to player.
+    CreateTempParticle(buffer, client);
 
     return Plugin_Handled;
 }
@@ -677,10 +641,23 @@ public void TF2_OnConditionRemoved(int client, TFCond condition) {
     if(condition != TFCond_Taunting)
         return;
 
-    // If the particle still exists when player is no longer taunting, get rid of it.
-    if(IsValidEntity(particleEntity[client])) {
-        DeleteParticle(particleEntity[client]);
-    }
+    Player player = Player(client);
+
+    char effect[MAXPLAYERS+1][64]; // String to store current unusual taunt effect into
+    player.GetUnusualTauntEffectId(effect[client], sizeof(effect)); // Grab player current unusual effect and store into destination buffer
+
+    // These will be valid entities on resupply due to player has be alive for resupply to take place.
+    int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+
+    ClearTempParticles(client);
+    CreateTempParticle("killstreak_t1_lvl2", client);
+
+    if(player.GetKillstreakTierId(primary) > 0) // Only do if player has selected a killstreak tier
+        TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary))); // Updates killstreak tier attribute to selected value
+    if(player.GetKillstreakSheenId(primary) > 0) 
+        TF2Attrib_SetByDefIndex(primary, 2014, float(player.GetKillstreakSheenId(primary)));
+    if(player.GetKillstreakEffectId(primary) > 0)
+        TF2Attrib_SetByDefIndex(primary, 2013, float(player.GetKillstreakEffectId(primary)));
 
     delete refireTimer[client]; // Stop timer from refiring if player is no longer taunting.
 }
@@ -840,6 +817,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
             char info[32];
             menu.GetItem(menuItem, info, sizeof(info));
 
+            // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
+            char steamid[32]; // Buffer to store SteamID32
+            if(!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid))) // Grab player SteamID32, if fails do nothing.
+                return -1;
+
             // Main Menu Handling
             // If item selected is killstreaks, show client killstreak menu.
             if(StrEqual(info, "Killstreak Menu")) {
@@ -892,6 +874,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
+                UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
             }
 
             // If player chose second weapon slot
@@ -918,6 +901,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
+                UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
             }
 
             // If player chose melee weapon slot
@@ -944,6 +928,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
+                UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
             }
 
             // Killstreak Tiers, Sheens, Effects Handlers (We give players the effects selected here!)
@@ -996,16 +981,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     // Set unusualTauntMenuId to desired effect by matching index of display name with id.
                     player.SetUnusualTauntEffectId(unusualTauntMenuItemIds[i]);
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
+                    UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
                     break;
                 }
             }
-
-            // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
-            char steamid[32]; // Buffer to store SteamID32
-            if(!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid))) // Grab player SteamID32, if fails do nothing.
-                return -1;
-
-            UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
         }
     }
 
@@ -1024,30 +1003,27 @@ void AttachParticle(int client, char[] particle) {
     char name[128];
     if(IsValidEntity(particleSystem)) {
         float pos[3]; // Create position vector (x, y, z)
+        float ang[3]; // Angle vector
 
         GetEntPropVector(client, Prop_Send, "m_vecOrigin", pos); // Update position vector with default position values 
+        GetEntPropVector(client, Prop_Data, "m_angRotation", ang);
         
-        TeleportEntity(particleSystem, pos, NULL_VECTOR, NULL_VECTOR); // Teleport entity to new position vectors (All setup to be attached to player)
+        TeleportEntity(particleSystem, pos, ang, NULL_VECTOR); // Teleport entity to new position vectors (All setup to be attached to player)
 
-        Format(name, sizeof(name), "target%i", client); // Set target to client which is creating the particle
-        DispatchKeyValue(client, "targetname", name); // Dispatch KeyValue "targetname" into client.
+        //Format(name, sizeof(name), "target%i", client); // Set target to client which is creating the particle
+        //DispatchKeyValue(client, "targetname", name); // Dispatch KeyValue "targetname" into client.
+        SetVariantString("!activator");
+        AcceptEntityInput(particleSystem, "SetParent", client);  
 
         DispatchKeyValue(particleSystem, "targetname", "tf2particle"); // Dispatch KeyValue "targetname" with value "tf2particle" into partice entity, this tells the game we are trying to create a default in-game particle effect.
         DispatchKeyValue(particleSystem, "parentname", name); // Set / dispatch parent of particle system to target client.
         DispatchKeyValue(particleSystem, "effect_name", particle); // Set particle name, this is where we change the particle we want to spawn.
         DispatchSpawn(particleSystem); // Remove it from it's 0,0 world center position.
-        SetVariantString(name); // Set name string in entity to line up with client.
-        AcceptEntityInput(particleSystem, "SetParent", particleSystem, particleSystem, 0); // Important for entity heirachy, will produce errors in console otherwise. REF: https://developer.valvesoftware.com/wiki/Entity_Hierarchy_(parenting)
-        SetVariantString(""); // Ensure no more variant strings are being sent to cause issues
+        SetVariantString("0"); // Ensure no more variant strings are being sent to cause issues
+        AcceptEntityInput(particleSystem, "SetParentAttachment", particleSystem, particleSystem, 0); 
+
 
         ActivateEntity(particleSystem); // Make the particle start doing it's thing!
-
-        SetEntPropEnt(particleSystem, Prop_Send, "m_hOwnerEntity", client);
-        char addoutput[64]; 
-        Format(addoutput, sizeof(addoutput), "OnUser1 !self:kill::10:1");
-        SetVariantString(addoutput);
-        AcceptEntityInput(particleSystem, "AddOutput");
-        AcceptEntityInput(particleSystem, "FireUser1");
         AcceptEntityInput(particleSystem, "start"); // Same thing as above essentially, some particles don't listen to ActivateEntity
 
         particleEntity[client] = particleSystem; // Set particle entity client picked with newly created particle.
@@ -1068,4 +1044,38 @@ void DeleteParticle(int particle) {
             RemoveEdict(particle); // Remove it from the server to reduce entity count.
 		}
 	}
+}
+
+void CreateTempParticle(char[] particle, int entity = -1, float origin[3] = NULL_VECTOR, float angles[3] = {0.0, 0.0, 0.0}, bool resetparticles = false) {
+    int tblidx = FindStringTable("ParticleEffectNames");
+
+    char tmp[256];
+    int stridx = INVALID_STRING_INDEX;
+
+    for (int i = 0; i < GetStringTableNumStrings(tblidx); i++) {
+        ReadStringTable(tblidx, i, tmp, sizeof(tmp));
+        if(StrEqual(tmp, particle, false)) {
+            stridx = i;
+            break;
+        }
+    }
+
+    TE_Start("TFParticleEffect");
+    TE_WriteFloat("m_vecOrigin[0]", origin[0]);
+    TE_WriteFloat("m_vecOrigin[1]", origin[1]);
+    TE_WriteFloat("m_vecOrigin[2]", origin[2]);
+    TE_WriteFloat("m_vecStart[0]", origin[0]);
+    TE_WriteFloat("m_vecStart[1]", origin[1]);
+    TE_WriteFloat("m_vecStart[2]", origin[2]);
+    TE_WriteVector("m_vecAngles", angles);
+    TE_WriteNum("m_iParticleSystemIndex", stridx);
+    TE_WriteNum("entindex", entity);
+    TE_WriteNum("m_iAttachType", 0); // AttachType 1 sets origin of temporary entity to the map world origin point (0, 0), we don't want that.
+    TE_WriteNum("m_bResetParticles", resetparticles);
+    TE_SendToAll();
+}
+
+void ClearTempParticles(int client) {
+	float empty[3];
+	CreateTempParticle("sandwich_fx", client, empty, empty, true);
 }
