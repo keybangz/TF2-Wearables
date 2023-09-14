@@ -1021,7 +1021,6 @@ stock void AttachParticle(int client, char[] particle) {
         SetVariantString("0"); // Ensure no more variant strings are being sent to cause issues
         AcceptEntityInput(particleSystem, "SetParentAttachment", particleSystem, particleSystem, 0); 
 
-
         ActivateEntity(particleSystem); // Make the particle start doing it's thing!
         AcceptEntityInput(particleSystem, "start"); // Same thing as above essentially, some particles don't listen to ActivateEntity
 
@@ -1032,12 +1031,10 @@ stock void AttachParticle(int client, char[] particle) {
 // DeleteParticle - Deletes particle entity when called
 // Labelled as stock as we are not currently using this in the plugin, but have plans to in the future. (Prevents compiler warnings.)
 stock void DeleteParticle(int particle) {
-	if (IsValidEntity(particle)) // If the particle exists
-	{
+	if (IsValidEntity(particle)) { // If particle exists as an entity.
 		char classname[64]; 
 		GetEdictClassname(particle, classname, sizeof(classname)); // Store classname of particle entity grabbed, (this case: info_particle_system)
-		if (StrEqual(classname, "info_particle_system", false)) // Check it
-		{
+		if (StrEqual(classname, "info_particle_system", false)) { // Check if entity classname matches info_particle_system
             AcceptEntityInput(particle, "Stop"); // We're trying our best to get rid of stubborn particles.
             AcceptEntityInput(particle, "DestroyImmediately"); // Some particles don't disappear without this
             AcceptEntityInput(particle, "Kill"); // Hotfix to destroy some particles from server on next game frame.
