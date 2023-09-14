@@ -915,7 +915,6 @@ public void DatabaseHandler(Database db, const char[] error, any data) {
     // unusualTauntId - Unusual taunt effect selected by player.
     // unusualHatId - Unusual hat effect selected by player.
     FormatEx(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (id int(11) NOT NULL AUTO_INCREMENT, steamid varchar(32) UNIQUE, primaryTier int(11), primarySheen int(11), primaryEffect int(11), secondaryTier int(11), secondarySheen int(11), secondaryEffect int(11), meleeTier int(11), meleeSheen int(11), meleeEffect int(11), unusualTauntId varchar(64), unusualHatId int(11), PRIMARY KEY (id))", buffer);
-    PrintToServer(query);
     WearablesDB.Query(SQLError, query); // Query to SQL error callback, since we do nothing with data when creating table.
 }
 
