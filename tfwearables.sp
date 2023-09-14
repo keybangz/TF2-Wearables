@@ -9,7 +9,7 @@
 #pragma newdecls required // Force Transitional Syntax
 #pragma semicolon 1 // Force semicolon mode
 
-#define PLUGIN_VERSION "1.1"
+#define PLUGIN_VERSION "1.2"
 
 // REF: https://developer.valvesoftware.com/wiki/Entity_limit
 #define MAX_ENTITY_SIZE 4096
@@ -394,7 +394,6 @@ public void DatabaseHandler(Database db, const char[] error, any data) {
     // meleeEffect - Melee weapon effect selected by player.
     // unusualTauntId - Unusual taunt effect selected by player.
     FormatEx(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (id int(11) NOT NULL AUTO_INCREMENT, steamid varchar(32) UNIQUE, primaryTier int(11), primarySheen int(11), primaryEffect int(11), secondaryTier int(11), secondarySheen int(11), secondaryEffect int(11), meleeTier int(11), meleeSheen int(11), meleeEffect int(11), unusualTauntId varchar(64), PRIMARY KEY (id))", buffer);
-    PrintToServer("WEARABLES CONNECT QUERY: %s", query);
     WearablesDB.Query(SQLError, query); // Query to SQL error callback, since we do nothing with data when creating table.
 }
 
