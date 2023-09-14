@@ -41,6 +41,11 @@ Simply place the compiled smx into your Sourcemod plugins folder, this plugin do
 
 - Add other wearable options (Weapon unusuals, festive, australiums, etc) // NOTE: Require creating weapon entities and parenting old attributes to display correctly, currently out of scope for project.
 
+## BUGS
+
+- If server has thirdperson mode plugin, killstreak effects will disappear for client until they switch weapons or respawn. (This does not happen in first person mode).
+- Not sure if above bug affects other clients, have not been able to test.
+
 ## Credits
 
 - asherkin - For the creation of TF2Items
