@@ -650,7 +650,6 @@ public void TF2_OnConditionRemoved(int client, TFCond condition) {
     int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
 
     ClearTempParticles(client);
-    CreateTempParticle("killstreak_t1_lvl2", client);
 
     if(player.GetKillstreakTierId(primary) > 0) // Only do if player has selected a killstreak tier
         TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary))); // Updates killstreak tier attribute to selected value
@@ -992,7 +991,8 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 }
 
 // AttachParticle - Used to manually create and attach particles to player.
-void AttachParticle(int client, char[] particle) {
+// Labelled as stock as we are not currently using this in the plugin, but have plans to in the future. (Prevents compiler warnings.)
+stock void AttachParticle(int client, char[] particle) {
     // Here we will implement Temporary Entity system for particles which either 1. Don't disappear when the parent entity is killed or 2. Don't follow player model body pattern like they should in official taunts.
     // REF: https://wiki.alliedmods.net/Temp_Entity_Lists_(Source)
     
@@ -1031,7 +1031,8 @@ void AttachParticle(int client, char[] particle) {
 }
 
 // DeleteParticle - Deletes particle entity when called
-void DeleteParticle(int particle) {
+// Labelled as stock as we are not currently using this in the plugin, but have plans to in the future. (Prevents compiler warnings.)
+stock void DeleteParticle(int particle) {
 	if (IsValidEntity(particle)) // If the particle exists
 	{
 		char classname[64]; 
@@ -1046,36 +1047,42 @@ void DeleteParticle(int particle) {
 	}
 }
 
+// This creates a temporary entity as a TFParticleEffect which allows the unusual taunts to be wrapped around the client model / take the client model sizing correctly.
+// The downside to this is in ThirdPerson mode, killstreak effects are also wiped as they are also temporary entities
+// Temporary entities do not have an index or ID, meaning we must clear all at once.
+// REF: https://developer.valvesoftware.com/wiki/Temporary_Entity
 void CreateTempParticle(char[] particle, int entity = -1, float origin[3] = NULL_VECTOR, float angles[3] = {0.0, 0.0, 0.0}, bool resetparticles = false) {
-    int tblidx = FindStringTable("ParticleEffectNames");
+    int tblidx = FindStringTable("ParticleEffectNames"); // Grab particle effect string table
 
     char tmp[256];
     int stridx = INVALID_STRING_INDEX;
 
-    for (int i = 0; i < GetStringTableNumStrings(tblidx); i++) {
-        ReadStringTable(tblidx, i, tmp, sizeof(tmp));
-        if(StrEqual(tmp, particle, false)) {
+    for (int i = 0; i < GetStringTableNumStrings(tblidx); i++) { // Loop through particle effect string table
+        ReadStringTable(tblidx, i, tmp, sizeof(tmp)); // Store particle at index into temporary value
+        if(StrEqual(tmp, particle, false)) {  // If the value matches our particle we wish to create, assign string index.
             stridx = i;
             break;
         }
     }
 
-    TE_Start("TFParticleEffect");
-    TE_WriteFloat("m_vecOrigin[0]", origin[0]);
+    TE_Start("TFParticleEffect"); // Start temporary entity as TFParticleEffect
+    TE_WriteFloat("m_vecOrigin[0]", origin[0]); // Set origin vector for TFParticleEffect
     TE_WriteFloat("m_vecOrigin[1]", origin[1]);
     TE_WriteFloat("m_vecOrigin[2]", origin[2]);
-    TE_WriteFloat("m_vecStart[0]", origin[0]);
+    TE_WriteFloat("m_vecStart[0]", origin[0]); // Set start vector for TFParticleEffect
     TE_WriteFloat("m_vecStart[1]", origin[1]);
     TE_WriteFloat("m_vecStart[2]", origin[2]);
-    TE_WriteVector("m_vecAngles", angles);
-    TE_WriteNum("m_iParticleSystemIndex", stridx);
-    TE_WriteNum("entindex", entity);
+    TE_WriteVector("m_vecAngles", angles); // Set angle vector for TFParticleEffect
+    TE_WriteNum("m_iParticleSystemIndex", stridx); // Set temporary entity particle index in TempEnt to match the particle from our string table.
+    TE_WriteNum("entindex", entity); // Assign the temporary entity to the entity passed in parameter 2.
     TE_WriteNum("m_iAttachType", 0); // AttachType 1 sets origin of temporary entity to the map world origin point (0, 0), we don't want that.
-    TE_WriteNum("m_bResetParticles", resetparticles);
-    TE_SendToAll();
+    TE_WriteNum("m_bResetParticles", resetparticles); // This is called to reset all particles attached to that entity, unfortunately there's no other to clear temporary entities.
+    TE_SendToAll(); // Send temporary entity to all players.
 }
 
+// ClearTempParticles()
+// Dummy function used to easier remove all temporary entities from target entity.
 void ClearTempParticles(int client) {
 	float empty[3];
-	CreateTempParticle("sandwich_fx", client, empty, empty, true);
+	CreateTempParticle("sandwich_fx", client, empty, empty, true); // Creates a empty sandwich_fx particle and passes true on m_bResetParticles, deleting all particles attached to entity.
 }
