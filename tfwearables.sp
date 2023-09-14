@@ -487,7 +487,7 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
         return;
     }
 
-    char buffer[32]; // Buffer to fetch unusualTauntId's
+    char buffer[64]; // Buffer to fetch unusualTauntId's
 
     // If userid passed to callback is invalid, do nothing.
     if((client = GetClientOfUserId(data)) == 0)
@@ -615,7 +615,7 @@ public void TF2_OnConditionAdded(int client, TFCond condition) {
 // HandleRefire
 // Timer callback handled per client to reissue any unusual taunt effects which have an expiry time.
 public Action HandleRefire(Handle timer, DataPack pack) {
-    char buffer[32]; // Unusual taunt effect passed through
+    char buffer[64]; // Unusual taunt effect passed through
     int client; // Client passed through
 
     // Datapacks require the data that is written to them be read in the same order it was written to.
