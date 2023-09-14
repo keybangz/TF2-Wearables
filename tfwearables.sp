@@ -1221,9 +1221,6 @@ public void TF2_OnConditionRemoved(int client, TFCond condition) {
 
     Player player = Player(client);
 
-    char effect[MAXPLAYERS+1][64]; // String to store current unusual taunt effect into
-    player.GetUnusualTauntEffectId(effect[client], sizeof(effect)); // Grab player current unusual effect and store into destination buffer
-
     // These will be valid entities on resupply due to player has be alive for resupply to take place.
     int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
 
