@@ -5,6 +5,8 @@
 #include <morecolors>
 #include <clientprefs>
 #include <sdktools>
+#include <tf_econ_data>
+#include <tf2utils>
 
 #pragma newdecls required // Force Transitional Syntax
 #pragma semicolon 1 // Force semicolon mode
@@ -24,6 +26,7 @@ char unusualTauntEffect[MAXPLAYERS+1][64]; // Store selected unusual taunt affec
 int particleEntity[MAXPLAYERS+1]; // Used to track current particles created by our plugin, when player no longer needs them, we call DeleteParticle to ensure entity limit is not reached, see above.
 Handle refireTimer[MAXPLAYERS+1]; // Handle to track unusual taunts with an expiry time.
 int unusualHatEffect[MAXPLAYERS+1];
+int unusualWeaponEffect[MAXPLAYERS+1][MAX_ENTITY_SIZE];
 
 ArrayList hatIDList; // ArrayList to store all hat ids we can apply unusual effects too in-game
 
@@ -34,6 +37,7 @@ ArrayList hatIDList; // ArrayList to store all hat ids we can apply unusual effe
 int tTier[MAXPLAYERS+1];
 int tSheen[MAXPLAYERS+1];
 int tEffect[MAXPLAYERS+1];
+int tWeaponEffect[MAXPLAYERS+1];
 
 Database WearablesDB = null; // Setup database handle we will be using in our plugin.
 
@@ -41,7 +45,8 @@ Database WearablesDB = null; // Setup database handle we will be using in our pl
 char wearableMenuItems[][] = {
     "Killstreak Menu",
     "Unusual Taunts Menu",
-    "Unusual Hats Menu"
+    "Unusual Hats Menu",
+    "Unusual Weapons Menu"
 };
 
 // killStreakMenuItems showed on Killstreak Menu, does not need to match int array as we do nothing with the info other than display another menu.
@@ -547,6 +552,13 @@ char unusualTauntMenuItemIds[][] = {
     "utaunt_wild_meadows_parent" // Wildflower Meadows
 };
 
+char unusualWeaponMenuItems[][] = { // Unusual weapon effects in menu, matches unusualWeaponSel int array
+    "Hot",
+    "Isotope",
+    "Cool",
+    "Energy Orb"
+};
+
 // All possible menus which can be created, I have given them an ID order of +1 to keep it simple.
 enum wearablesOptions {
     wearablesMenu = 0,
@@ -556,7 +568,15 @@ enum wearablesOptions {
     killStreakSheenMenu = 4,
     killStreakEffectMenu = 5,
     slotSelectMenu = 6,
-    unusualMenu = 7
+    unusualMenu = 7,
+    unusualWeaponMenu = 8
+};
+
+int unusualWeaponSel[] = { // Unusual weapon effects, matches unusualWeaponSel int array
+    701, // Hot 
+    702, // Isotope
+    703, // Cool
+    704 // Energy Orb
 };
 
 // These are all the different unusual effects which can be applied to a players hat. Matches with unusualMenuItems string array.
@@ -914,7 +934,7 @@ public void DatabaseHandler(Database db, const char[] error, any data) {
     // meleeEffect - Melee weapon effect selected by player.
     // unusualTauntId - Unusual taunt effect selected by player.
     // unusualHatId - Unusual hat effect selected by player.
-    FormatEx(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (id int(11) NOT NULL AUTO_INCREMENT, steamid varchar(32) UNIQUE, primaryTier int(11), primarySheen int(11), primaryEffect int(11), secondaryTier int(11), secondarySheen int(11), secondaryEffect int(11), meleeTier int(11), meleeSheen int(11), meleeEffect int(11), unusualTauntId varchar(64), unusualHatId int(11), PRIMARY KEY (id))", buffer);
+    FormatEx(query, sizeof(query), "CREATE TABLE IF NOT EXISTS %s (id int(11) NOT NULL AUTO_INCREMENT, steamid varchar(32) UNIQUE, primaryTier int(11), primarySheen int(11), primaryEffect int(11), secondaryTier int(11), secondarySheen int(11), secondaryEffect int(11), meleeTier int(11), meleeSheen int(11), meleeEffect int(11), unusualTauntId varchar(64), unusualHatId int(11), unusualPrimary int(11), unusualSecondary int(11), unusualMelee int(11), PRIMARY KEY (id))", buffer);
     WearablesDB.Query(SQLError, query); // Query to SQL error callback, since we do nothing with data when creating table.
 }
 
@@ -942,45 +962,67 @@ methodmap Player {
     property int index { // Returns player index so we can apply effects when needed.
         public get() { return view_as<int>(this); }
     }
+
     // Was previously using real methodmap setters and getters for this, however we want the ability to set effects to desired slot and we cannot pass more than 1 parameter to setters in SourceMod.
     // Update: .get methodmap function on property was not returning anything?, just use standard function for now.
     // Get players current killstreak tier on desired slot.
     public int GetKillstreakTierId(int slot) {
         return killStreakTier[this.index][slot];
     }
-    // Get players current killstreak sheen on desired slot.
-    public int GetKillstreakSheenId(int slot) {
-        return killStreakSheen[this.index][slot];
-    }
-    // Get players current killstreak effect on desired slot.
-    public int GetKillstreakEffectId(int slot) {
-        return killStreakEffect[this.index][slot];
-    }
-    // Get players current unusual taunt effect and stores them into destination buffer.
-    public void GetUnusualTauntEffectId(char[] val, int length) {
-        strcopy(val, length, unusualTauntEffect[this.index]);
-    }
-    public int GetUnusualHatEffectId() {
-        return unusualHatEffect[this.index];
-    }
+
     // Set players selected killstreak tier on desired slot.
     public void SetKillstreakTierId(int val, int slot) {
         killStreakTier[this.index][slot] = val;
     }
+
+    // Get players current killstreak sheen on desired slot.
+    public int GetKillstreakSheenId(int slot) {
+        return killStreakSheen[this.index][slot];
+    }
+
     // Set players selected killstreak sheen on desired slot.
     public void SetKillstreakSheenId(int val, int slot) {
         killStreakSheen[this.index][slot] = val;
     }
+
+    // Get players current killstreak effect on desired slot.
+    public int GetKillstreakEffectId(int slot) {
+        return killStreakEffect[this.index][slot];
+    }
+
     // Set players selected killstreak effect on desired slot.
     public void SetKillstreakEffectId(int val, int slot) {
         killStreakEffect[this.index][slot] = val;
     }
+
+    // Get players current unusual taunt effect and stores them into destination buffer.
+    public void GetUnusualTauntEffectId(char[] val, int length) {
+        strcopy(val, length, unusualTauntEffect[this.index]);
+    }
+
     // Set players selected unusual taunt effect.
     public void SetUnusualTauntEffectId(char[] val) {
         strcopy(unusualTauntEffect[this.index], sizeof(unusualTauntEffect), val);
     }
+
+    // Get players current unusual hat effect
+    public int GetUnusualHatEffectId() {
+        return unusualHatEffect[this.index];
+    }
+
+    // Set players current unusual hat effect
     public void SetUnusualHatEffectId(int val) {
         unusualHatEffect[this.index] = val;
+    }
+
+    // Get players current unusual weapon effect at desired slot
+    public int GetUnusualWeaponEffect(int slot) {
+        return unusualWeaponEffect[this.index][slot];
+    }
+
+    // Set players current unusual weapon effect at desired slot
+    public void SetUnusualWeaponEffectId(int val, int slot) {
+        unusualWeaponEffect[this.index][slot] = val;
     }
 }
 
@@ -1041,10 +1083,10 @@ void updateEffectsEarly(Database db, DBResultSet results, const char[] error, an
 void FetchWearables(int client, char[] steamid) {
     int userid = GetClientUserId(client); // Pass through client userid to validate & update player data in handler.
     char buffer[256]; // Buffer used to store temporary values in FetchWearables
-    char query[256]; // Buffer used to store queries sent to database.
+    char query[512]; // Buffer used to store queries sent to database.
 
     cTableName.GetString(buffer, sizeof(buffer)); // Grab table name string value
-    FormatEx(query, sizeof(query), "SELECT primaryTier, primarySheen, primaryEffect, secondaryTier, secondarySheen, secondaryEffect, meleeTier, meleeSheen, meleeEffect, unusualTauntId, unusualHatId FROM %s WHERE steamid='%s'", buffer, steamid); // Setup query to select effects only if matching steamid.
+    FormatEx(query, sizeof(query), "SELECT primaryTier, primarySheen, primaryEffect, secondaryTier, secondarySheen, secondaryEffect, meleeTier, meleeSheen, meleeEffect, unusualTauntId, unusualHatId, unusualPrimary, unusualSecondary, unusualMelee FROM %s WHERE steamid='%s'", buffer, steamid); // Setup query to select effects only if matching steamid.
     WearablesDB.Query(FetchWearablesHandler, query, userid);
 
     // If player does not exist in table, add players steamid to table.
@@ -1070,6 +1112,9 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
     int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
     int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
     int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
+    if(!IsValidEntity(primary) || !IsValidEntity(secondary) || !IsValidEntity(melee))
+        return;
 
     Player player = Player(client);
 
@@ -1122,6 +1167,18 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
         // unusualHatId
         if(!SQL_IsFieldNull(results, 10)) 
             player.SetUnusualHatEffectId(results.FetchInt(10));
+
+        // unusualPrimary
+        if(!SQL_IsFieldNull(results, 11)) 
+            player.SetUnusualWeaponEffectId(results.FetchInt(11), primary);
+
+        // unusualSecondary
+        if(!SQL_IsFieldNull(results, 12)) 
+            player.SetUnusualWeaponEffectId(results.FetchInt(12), secondary);
+
+        // unusualMelee
+        if(!SQL_IsFieldNull(results, 13)) 
+            player.SetUnusualWeaponEffectId(results.FetchInt(13), melee);
     }
 }
 
@@ -1137,13 +1194,17 @@ void UpdateWearables(int client, char[] steamid) {
     int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
     int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 
+    if(!IsValidEntity(primary) || !IsValidEntity(secondary) || !IsValidEntity(melee))
+        return;
+
     char effect[MAXPLAYERS+1][64]; // String to store current unusual taunt effect into
     player.GetUnusualTauntEffectId(effect[client], sizeof(effect)); // Store unusual taunt effect to buffer to use below.
 
     cTableName.GetString(buffer, sizeof(buffer));
     // This formatting part is a little ugly, here's a quick rundown.
     // Updates the players selected effect in the database by grabbing the values from our Player methodmap.
-    FormatEx(query, sizeof(query), "UPDATE %s SET primaryTier='%i', primarySheen='%i', primaryEffect='%i', secondaryTier='%i', secondarySheen='%i', secondaryEffect='%i', meleeTier='%i', meleeSheen='%i', meleeEffect='%i', unusualTauntId='%s', unusualHatId='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary), player.GetKillstreakTierId(secondary), player.GetKillstreakSheenId(secondary), player.GetKillstreakEffectId(secondary), player.GetKillstreakTierId(melee), player.GetKillstreakSheenId(melee), player.GetKillstreakEffectId(melee), effect[client], player.GetUnusualHatEffectId(), steamid);
+    FormatEx(query, sizeof(query), "UPDATE %s SET primaryTier='%i', primarySheen='%i', primaryEffect='%i', secondaryTier='%i', secondarySheen='%i', secondaryEffect='%i', meleeTier='%i', meleeSheen='%i', meleeEffect='%i', unusualTauntId='%s', unusualHatId='%i', unusualPrimary='%i', unusualSecondary='%i', unusualMelee='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary), player.GetKillstreakTierId(secondary), player.GetKillstreakSheenId(secondary), player.GetKillstreakEffectId(secondary), player.GetKillstreakTierId(melee), player.GetKillstreakSheenId(melee), player.GetKillstreakEffectId(melee), effect[client], player.GetUnusualHatEffectId(), player.GetUnusualWeaponEffect(primary), player.GetUnusualWeaponEffect(secondary), player.GetUnusualWeaponEffect(melee), steamid);
+    PrintToServer(query);
     WearablesDB.Query(SQLError, query);
 }
 
@@ -1219,19 +1280,7 @@ public void TF2_OnConditionRemoved(int client, TFCond condition) {
     if(condition != TFCond_Taunting)
         return;
 
-    Player player = Player(client);
-
-    // These will be valid entities on resupply due to player has be alive for resupply to take place.
-    int primary = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
-
     ClearTempParticles(client);
-
-    if(player.GetKillstreakTierId(primary) > 0) // Only do if player has selected a killstreak tier
-        TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary))); // Updates killstreak tier attribute to selected value
-    if(player.GetKillstreakSheenId(primary) > 0) 
-        TF2Attrib_SetByDefIndex(primary, 2014, float(player.GetKillstreakSheenId(primary)));
-    if(player.GetKillstreakEffectId(primary) > 0)
-        TF2Attrib_SetByDefIndex(primary, 2013, float(player.GetKillstreakEffectId(primary)));
 
     delete refireTimer[client]; // Stop timer from refiring if player is no longer taunting.
 }
@@ -1250,7 +1299,7 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast) {
     // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
     char steamid[32]; // Buffer to store SteamID32
     if(!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid))) // Grab player SteamID32, if fails do nothing.
-        return Plugin_Handled;
+        return Plugin_Continue;
 
     FetchWearables(client, steamid); // Fetch the wearable set from the database.
 
@@ -1262,7 +1311,7 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast) {
     int melee = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 
     if(!IsValidEntity(primary) || !IsValidEntity(secondary) || !IsValidEntity(melee))
-        return Plugin_Handled;
+        return Plugin_Continue;
 
     // Item attribute 2025 is a attribute definition for killstreak tiers
     // Item attribute 2014 is a attribute definition for killstreak sheens
@@ -1294,7 +1343,14 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast) {
     if(player.GetKillstreakEffectId(melee) > 0)
         TF2Attrib_SetByDefIndex(melee, 2013, float(player.GetKillstreakEffectId(melee)));
 
-    return Plugin_Continue;
+    if(player.GetUnusualWeaponEffect(primary) > 0)
+        TF2Attrib_SetByDefIndex(primary, 134, float(player.GetUnusualWeaponEffect(primary)));
+    if(player.GetUnusualWeaponEffect(secondary) > 0)
+        TF2Attrib_SetByDefIndex(secondary, 134, float(player.GetUnusualWeaponEffect(secondary)));
+    if(player.GetUnusualWeaponEffect(melee) > 0)
+        TF2Attrib_SetByDefIndex(melee, 134, float(player.GetUnusualWeaponEffect(melee)));
+
+    return Plugin_Handled;
 }
 
 // Command Handlers
@@ -1380,6 +1436,13 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
                 menu.AddItem(unusualMenuItems[i], unusualMenuItems[i]);
             }
         }
+
+        case unusualWeaponMenu: {
+            // Loop through unusualWeaponMenuItems string array to add correct options.
+            for(int i = 0; i < sizeof(unusualWeaponMenuItems); i++) {
+                menu.AddItem(unusualWeaponMenuItems[i], unusualWeaponMenuItems[i]);
+            }
+        }
     }
 
     menu.ExitButton = true;
@@ -1437,6 +1500,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 MenuCreate(client, killStreakEffectMenu, "Killstreak Effects Menu");
             }
 
+            // If selected, display available Killstreak Effects for player to choose from.
+            if(StrEqual(info, "Unusual Weapons Menu")) {
+                MenuCreate(client, unusualWeaponMenu, "Unusual Weapons Menu");
+            }
+
             // After selecting a killstreak attribute, player must select which weapon slot to apply the effect too.
             if(StrEqual(info, "Primary")) {
                 int slot = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
@@ -1447,16 +1515,25 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if(tTier[client] > 0) { // If temporary variable has been set, update values.
                     TF2Attrib_SetByDefIndex(slot, 2025, float(tTier[client])); // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot); // Update player killstreak tier to be used elsewhere.
+                    tTier[client] = 0;
                 }
 
                 if(tSheen[client] > 0) {
                     TF2Attrib_SetByDefIndex(slot, 2014, float(tSheen[client])); // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot); // Update player killstreak sheen to be used elsewhere.
+                    tSheen[client] = 0;
                 }
 
                 if(tEffect[client] > 0) {
                     TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client])); // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak effect to be used elsewhere.
+                    tEffect[client] = 0;
+                }
+
+                if(tWeaponEffect[client] > 0) {
+                    TF2Attrib_SetByDefIndex(slot, 134, float(tWeaponEffect[client])); // Updates weapon unusual effect to temporary value, permanent value used in OnResupply
+                    player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
+                    tWeaponEffect[client] = 0;
                 }
                 
                 // Display the main wearables menu after player has selected killstreak option.
@@ -1486,6 +1563,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak effect to be used elsewhere.
                 }
 
+                if(tWeaponEffect[client] > 0) {
+                    player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
+                    tWeaponEffect[client] = 0;
+                }
+
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
                 UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
@@ -1511,6 +1593,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if(tEffect[client] > 0) {
                     TF2Attrib_SetByDefIndex(slot, 2013, float(tEffect[client])); // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot); // Update player killstreak effect to be used elsewhere.
+                }
+
+                if(tWeaponEffect[client] > 0) {
+                    player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
+                    tWeaponEffect[client] = 0;
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
@@ -1573,12 +1660,23 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 }
             }
 
-             // Loop through unusualMenuItems string array
+            // Loop through unusualMenuItems string array
             for(int i = 0; i < sizeof(unusualMenuItems); i++) {
                 // If value picked on the menu matches our string value, then set item attribute index to value matching at same index.
                 if(StrEqual(info, unusualMenuItems[i])) {
                     player.SetUnusualHatEffectId(unusualHatSel[i]);
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
+                    UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
+                    break;
+                }
+            }
+
+            // Loop through unusualMenuItems string array
+            for(int i = 0; i < sizeof(unusualWeaponMenuItems); i++) {
+                // If value picked on the menu matches our string value, then set item attribute index to value matching at same index.
+                if(StrEqual(info, unusualWeaponMenuItems[i])) {
+                    MenuCreate(client, slotSelectMenu, "Apply to slot: ");
+                    tWeaponEffect[client] = unusualWeaponSel[i];
                     UpdateWearables(client, steamid); // Update the wearable attributes set by player by writing changes to database.
                     break;
                 }
@@ -1685,12 +1783,19 @@ void ClearTempParticles(int client) {
 
 // TF2Items_OnGiveNamedItem - from <tf2items>, called whenever a player gets a fresh set of items (when changing class, respawning(?), etc)
 public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemIndex, Handle &hItem) {
-    Player player = Player(client); // Initialize our player method map to save, store and update wearable effects.
-
-    if(hatIDList.FindValue(itemIndex) == -1) // If player is not wearing a hat, do nothing
-        return Plugin_Continue;
-
     hItem = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES); // Assign our item to be changing, we want to be keeping the old attributes of the players item but also overriding any we wish.
+
+    ProcessHats(client, itemIndex, hItem);
+    //ProcessWeapons(client, className, itemIndex, hItem);
+
+    return Plugin_Changed;
+}
+
+public Action ProcessHats(int client, int itemIndex, Handle &hItem) {
+    Player player = Player(client); // Initialize our player method map to save, store and update wearable effects.
+    
+    if(hatIDList.FindValue(itemIndex) == -1)
+        return Plugin_Continue;
 
     TF2Items_SetNumAttributes(hItem, 1); // Set number of attributes to change
 
@@ -1700,9 +1805,26 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemInd
     return Plugin_Changed; // Update the players item.
 }
 
+// public Action ProcessWeapons(int client, char[] className, int itemIndex, Handle &hItem) {
+//     Player player = Player(client); // Initialize our player method map to save, store and update wearable effects.
+
+//     if(StrContains(className, "tf_weapon", false) == -1)
+//         return Plugin_Continue;
+
+//     PrintToServer("className: %s", className);
+
+//     TF2Items_SetNumAttributes(hItem, 2); // Set number of attributes to change
+//     TF2Items_SetQuality(hItem, 5); // Set to unusual quality.
+
+//     PrintToServer("Primary Effect: %i",TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Primary));
+//     PrintToServer("Secondary Effect: %i", TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Secondary));
+//     PrintToServer("Melee Effect: %i", TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Melee));
+
+//     return Plugin_Changed;
+// }
+
 // ReadItemSchema
 // Function made to traverse the items_game schema and grab all "hat" item indexes so we can only give unusual effects to hats.
-// FIXME: Update for unusual weapon effects.
 public void ReadItemSchema() {
     KeyValues kv = new KeyValues("items_game");
     kv.ImportFromFile("scripts/items/items_game.txt");
