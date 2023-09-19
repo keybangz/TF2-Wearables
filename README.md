@@ -8,6 +8,8 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 - Killstreaks Effects: Allow the player to choose the level of killstreak applied to a specific weapon slot in their inventory, and is not bound to the weapon the player has chosen.
 - Unusual Taunts: Allows the player to choose a unusual effect for taunting in-game. (Also known as emoting)
+- Unusual Hat Effects: Allows the player to choose a unusual hat effect. (If they are wearing a hat in-game)
+- Unusual Weapon Effects: Allows the player to attach a unusual weapon effect to the desired slot. (Updates OnResupply, needs to moved to OnGiveNamedItem)
 - MySQL support (Saves players preferences if they disconnect!)
 
 ## Commands
@@ -24,7 +26,7 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 ![20230919233340_1](https://github.com/keybangz/TF2-Wearables/assets/23132897/4667de68-bf63-4e67-9aa8-569ecba30ce9)
 
-![20230914193644_1](https://github.com/keybangz/TF2-Wearables/assets/23132897/a92c6b49-2a62-4085-a833-89339720cf8b)
+![20230919234314_1](https://github.com/keybangz/TF2-Wearables/assets/23132897/5de812d1-dc7d-4ca5-a452-e913e3209178)
 
 ## Dependencies
 
@@ -39,7 +41,7 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 ## TODO
 
-- Add other wearable options (Weapon unusuals, festive, australiums, etc) // NOTE: Require creating weapon entities and parenting old attributes to display correctly, currently out of scope for project.
+- Add other wearable options (Festive, Australiums, etc)
 
 ## Credits
 
