@@ -1786,10 +1786,43 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemInd
     hItem = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES); // Assign our item to be changing, we want to be keeping the old attributes of the players item but also overriding any we wish.
 
     ProcessHats(client, itemIndex, hItem);
-    //ProcessWeapons(client, className, itemIndex, hItem);
+    // ProcessWeapons(client, className, itemIndex, hItem);
 
     return Plugin_Changed;
 }
+
+// public Action TF2Items_OnGetLoadoutItem(int client, int class, int slot, Handle &item) {
+    // Player player = Player(client); // Initialize our player method map to save, store and update wearable effects.
+    // char buffer[256];
+
+    // item = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES);
+
+    // TF2Items_GetClassname(item, buffer, sizeof(buffer));
+
+    // PrintToServer("buffer: %s", buffer);
+
+    // int wep = GetPlayerWeaponSlot(client, slot);
+
+    // if(!IsValidEntity(wep))
+    //     return Plugin_Continue;
+
+    // char buffer[128];
+
+    // GetEntityClassname(wep, buffer, sizeof(buffer));
+    // int wepIndex = GetEntProp(wep, Prop_Send, "m_iItemDefinitionIndex");
+
+    // TF2Items_SetClassname(item, buffer);
+    // TF2Items_SetItemIndex(item, wepIndex);
+
+    // PrintToServer("wep: %i, effect: %f", wep, float(player.GetUnusualWeaponEffect(wep)));
+
+    // TF2Items_SetNumAttributes(item, 2); // Set number of attributes to change
+    // TF2Items_SetQuality(item, 5); // Set to unusual quality.
+
+    // TF2Items_SetAttribute(item, 1, 134, float(player.GetUnusualWeaponEffect(wep)));
+
+    // return Plugin_Changed;
+// }
 
 public Action ProcessHats(int client, int itemIndex, Handle &hItem) {
     Player player = Player(client); // Initialize our player method map to save, store and update wearable effects.
@@ -1813,12 +1846,28 @@ public Action ProcessHats(int client, int itemIndex, Handle &hItem) {
 
 //     PrintToServer("className: %s", className);
 
+//     if(!TF2Econ_IsValidItemDefinition(itemIndex))
+//         return Plugin_Continue;
+
+//     PrintToServer("itemIndex: %i", itemIndex);
+
 //     TF2Items_SetNumAttributes(hItem, 2); // Set number of attributes to change
 //     TF2Items_SetQuality(hItem, 5); // Set to unusual quality.
 
-//     PrintToServer("Primary Effect: %i",TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Primary));
-//     PrintToServer("Secondary Effect: %i", TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Secondary));
-//     PrintToServer("Melee Effect: %i", TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Melee));
+//     int loadoutSlot = TF2Econ_GetItemDefaultLoadoutSlot(itemIndex);
+
+//     PrintToServer("loadoutSlot: %i", loadoutSlot);
+
+//     int wep = TF2Util_GetPlayerLoadoutEntity(client, loadoutSlot);
+
+//     if(!IsValidEntity(wep))
+//         return Plugin_Continue;
+
+//     PrintToServer("wep: %i", wep);
+
+//     int wepSlot = TF2Util_GetWeaponSlot(wep);
+
+//     PrintToServer("wepSlot: %i", wepSlot);
 
 //     return Plugin_Changed;
 // }
