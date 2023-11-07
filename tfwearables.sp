@@ -11,7 +11,7 @@
 #pragma newdecls required // Force Transitional Syntax
 #pragma semicolon 1 // Force semicolon mode
 
-#define PLUGIN_VERSION "1.3"
+#define PLUGIN_VERSION "1.3.1"
 
 // REF: https://developer.valvesoftware.com/wiki/Entity_limit
 #define MAX_ENTITY_SIZE 4096
