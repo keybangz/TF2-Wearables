@@ -1085,6 +1085,11 @@ void updateEffectsEarly(Database db, DBResultSet results, const char[] error, an
 
 // FetchWearables - Used to fetch all data that might be already stored for the player inside the database.
 void FetchWearables(int client, char[] steamid) {
+	
+    if (IsFakeClient(client)){ // We do not need this code to run when a bot joins the server, that is only a waste of resources, and sending queries unnecessarily to the database.
+       return;
+    }
+	
     int userid = GetClientUserId(client); // Pass through client userid to validate & update player data in handler.
     char buffer[256]; // Buffer used to store temporary values in FetchWearables
     char query[512]; // Buffer used to store queries sent to database.
@@ -1361,9 +1366,9 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast) {
 
 public Action WearablesCommand(int client, int args) {
 	
-	if (client <= 0){
-		PrintToServer("[TF Wearables] This command is not available to the server console"); // Properly handle command for server console, instead of throwing an error.
-		return Plugin_Handled;
+    if (client <= 0){
+        PrintToServer("[TF2 Wearables] This command is not available to the server console"); // Properly handle command for server console, instead of throwing an error.
+        return Plugin_Handled;
 	}
 	
     if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
