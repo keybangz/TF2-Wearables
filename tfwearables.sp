@@ -6,12 +6,12 @@
 #include <clientprefs>
 #include <sdktools>
 #include <tf_econ_data>
-#include <tf2utils>
+
 
 #pragma newdecls required // Force Transitional Syntax
 #pragma semicolon 1 // Force semicolon mode
 
-#define PLUGIN_VERSION "1.2"
+#define PLUGIN_VERSION "1.3"
 
 // REF: https://developer.valvesoftware.com/wiki/Entity_limit
 #define MAX_ENTITY_SIZE 4096
@@ -1033,18 +1033,22 @@ methodmap Player {
 
 // Unusual effects cannot be fetched & applied fast enough to update before player spawns, here we'll grab Unusual Taunt + Unusual Hat Effect and set them since we can do that without any extra information. (such as weapon slots)
 public void OnClientPutInServer(int client) {
-    int userid = GetClientUserId(client); // Pass through client userid to validate & update player data in handler.
-    char buffer[256]; // Buffer used to store temporary values in FetchWearables
-    char query[256]; // Buffer used to store queries sent to database.
+	
+	if (IsFakeClient(client)){ // Check if the client is a fake or not. If the client is fake, we stop the function so we don't send unnecessary queries to the database.
+		return;
+	}
+	int userid = GetClientUserId(client); // Pass through client userid to validate & update player data in handler.
+	char buffer[256]; // Buffer used to store temporary values in FetchWearables
+	char query[256]; // Buffer used to store queries sent to database.
 
     // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
-    char steamid[32]; // Buffer to store SteamID32
-    if(!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid))) // Grab player SteamID32, if fails do nothing.
-        return;
+	char steamid[32]; // Buffer to store SteamID32
+	if(!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid))) // Grab player SteamID32, if fails do nothing.
+		return;
 
-    cTableName.GetString(buffer, sizeof(buffer)); // Grab table name string value
-    FormatEx(query, sizeof(query), "SELECT unusualTauntId, unusualHatId FROM %s WHERE steamid='%s'", buffer, steamid); // Setup query to select effects only if matching steamid.
-    WearablesDB.Query(updateEffectsEarly, query, userid);
+	cTableName.GetString(buffer, sizeof(buffer)); // Grab table name string value
+	FormatEx(query, sizeof(query), "SELECT unusualTauntId, unusualHatId FROM %s WHERE steamid='%s'", buffer, steamid); // Setup query to select effects only if matching steamid.
+	WearablesDB.Query(updateEffectsEarly, query, userid);
 }
 
 // I would totally prefer not to do an early fetch and fetch all information at once, but hey not everything can be perfect.
@@ -1356,6 +1360,12 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast) {
 // Command Handlers
 
 public Action WearablesCommand(int client, int args) {
+	
+	if (client <= 0){
+		PrintToServer("[TF Wearables] This command is not available to the server console"); // Properly handle command for server console, instead of throwing an error.
+		return Plugin_Handled;
+	}
+	
     if(!cEnabled.BoolValue) // If plugin is not enabled, do nothing.
         return Plugin_Handled; 
 
