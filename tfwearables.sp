@@ -905,6 +905,8 @@ public void OnPluginStart()
 	char dbname[64];
 	cDatabaseName.GetString(dbname, sizeof(dbname));	// Grab database ConVar string value and store to buffer.
 
+	// AddTempEntHook("TFParticleEffect", TFParticleHook);
+
 	// Connect to database here.
 	Database.Connect(DatabaseHandler, dbname);	  // Pass string buffer to connect method.
 }
@@ -1114,10 +1116,8 @@ void updateEffectsEarly(Database db, DBResultSet results, const char[] error, an
 // FetchWearables - Used to fetch all data that might be already stored for the player inside the database.
 void FetchWearables(int client, char[] steamid)
 {
-	if (IsFakeClient(client))
-	{	 // We do not need this code to run when a bot joins the server, that is only a waste of resources, and sending queries unnecessarily to the database.
+	if (IsFakeClient(client) || !IsClientInGame(client))
 		return;
-	}
 
 	int	 userid = GetClientUserId(client);	  // Pass through client userid to validate & update player data in handler.
 	char buffer[256];						  // Buffer used to store temporary values in FetchWearables
@@ -1153,9 +1153,6 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 	int secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
 	int melee	  = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 
-	if (!IsValidEntity(primary) || !IsValidEntity(secondary) || !IsValidEntity(melee))
-		return;
-
 	Player player = Player(client);
 
 	// Grab row of data provided by SQL query.
@@ -1163,41 +1160,60 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 	{
 		// Here we've got to check each individual field and check if it's null before attempting to grab or update data.
 		// Goes in order with query, meaning primaryTier = 0, primarySheen = 1, primaryEffect = 2, and so on.
-		// primaryTier
-		if (!SQL_IsFieldNull(results, 0))
-			player.SetKillstreakTierId(results.FetchInt(0), primary);
 
-		// primarySheen
-		if (!SQL_IsFieldNull(results, 1))
-			player.SetKillstreakSheenId(results.FetchInt(1), primary);
+		if(IsValidEntity(primary)) {
+			// primaryTier
+			if (!SQL_IsFieldNull(results, 0))
+				player.SetKillstreakTierId(results.FetchInt(0), primary);
 
-		// primaryEffect
-		if (!SQL_IsFieldNull(results, 2))
-			player.SetKillstreakEffectId(results.FetchInt(2), primary);
+			// primarySheen
+			if (!SQL_IsFieldNull(results, 1))
+				player.SetKillstreakSheenId(results.FetchInt(1), primary);
 
-		// secondaryTier
-		if (!SQL_IsFieldNull(results, 3))
-			player.SetKillstreakTierId(results.FetchInt(3), secondary);
+			// primaryEffect
+			if (!SQL_IsFieldNull(results, 2))
+				player.SetKillstreakEffectId(results.FetchInt(2), primary);
 
-		// secondarySheen
-		if (!SQL_IsFieldNull(results, 4))
-			player.SetKillstreakSheenId(results.FetchInt(4), secondary);
+			// unusualPrimary
+			if (!SQL_IsFieldNull(results, 11))
+				player.SetUnusualWeaponEffectId(results.FetchInt(11), primary);
+		}
 
-		// secondaryEffect
-		if (!SQL_IsFieldNull(results, 5))
-			player.SetKillstreakEffectId(results.FetchInt(5), secondary);
+		if(IsValidEntity(secondary)) {
+			// secondaryTier
+			if (!SQL_IsFieldNull(results, 3))
+				player.SetKillstreakTierId(results.FetchInt(3), secondary);
 
-		// meleeTier
-		if (!SQL_IsFieldNull(results, 6))
-			player.SetKillstreakTierId(results.FetchInt(6), melee);
+			// secondarySheen
+			if (!SQL_IsFieldNull(results, 4))
+				player.SetKillstreakSheenId(results.FetchInt(4), secondary);
 
-		// meleeSheen
-		if (!SQL_IsFieldNull(results, 7))
-			player.SetKillstreakSheenId(results.FetchInt(7), melee);
+			// secondaryEffect
+			if (!SQL_IsFieldNull(results, 5))
+				player.SetKillstreakEffectId(results.FetchInt(5), secondary);
 
-		// meleeEffect
-		if (!SQL_IsFieldNull(results, 8))
-			player.SetKillstreakEffectId(results.FetchInt(8), melee);
+			// unusualSecondary
+			if (!SQL_IsFieldNull(results, 12))
+				player.SetUnusualWeaponEffectId(results.FetchInt(12), secondary);
+		}
+
+		if(IsValidEntity(melee)) {
+			// meleeTier
+			if (!SQL_IsFieldNull(results, 6))
+				player.SetKillstreakTierId(results.FetchInt(6), melee);
+
+			// meleeSheen
+			if (!SQL_IsFieldNull(results, 7))
+				player.SetKillstreakSheenId(results.FetchInt(7), melee);
+
+			// meleeEffect
+			if (!SQL_IsFieldNull(results, 8))
+				player.SetKillstreakEffectId(results.FetchInt(8), melee);
+
+			// unusualMelee
+			if (!SQL_IsFieldNull(results, 13))
+				player.SetUnusualWeaponEffectId(results.FetchInt(13), melee);
+		}
 
 		// unusualTauntId
 		if (!SQL_IsFieldNull(results, 9))
@@ -1209,18 +1225,6 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 		// unusualHatId
 		if (!SQL_IsFieldNull(results, 10))
 			player.SetUnusualHatEffectId(results.FetchInt(10));
-
-		// unusualPrimary
-		if (!SQL_IsFieldNull(results, 11))
-			player.SetUnusualWeaponEffectId(results.FetchInt(11), primary);
-
-		// unusualSecondary
-		if (!SQL_IsFieldNull(results, 12))
-			player.SetUnusualWeaponEffectId(results.FetchInt(12), secondary);
-
-		// unusualMelee
-		if (!SQL_IsFieldNull(results, 13))
-			player.SetUnusualWeaponEffectId(results.FetchInt(13), melee);
 	}
 }
 
@@ -1237,17 +1241,31 @@ void UpdateWearables(int client, char[] steamid)
 	int	   secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
 	int	   melee	 = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
 
-	if (!IsValidEntity(primary) || !IsValidEntity(secondary) || !IsValidEntity(melee))
-		return;
-
 	char effect[MAXPLAYERS + 1][64];								   // String to store current unusual taunt effect into
 	player.GetUnusualTauntEffectId(effect[client], sizeof(effect));	   // Store unusual taunt effect to buffer to use below.
 
 	cTableName.GetString(buffer, sizeof(buffer));
-	// This formatting part is a little ugly, here's a quick rundown.
-	// Updates the players selected effect in the database by grabbing the values from our Player methodmap.
-	FormatEx(query, sizeof(query), "UPDATE %s SET primaryTier='%i', primarySheen='%i', primaryEffect='%i', secondaryTier='%i', secondarySheen='%i', secondaryEffect='%i', meleeTier='%i', meleeSheen='%i', meleeEffect='%i', unusualTauntId='%s', unusualHatId='%i', unusualPrimary='%i', unusualSecondary='%i', unusualMelee='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary), player.GetKillstreakTierId(secondary), player.GetKillstreakSheenId(secondary), player.GetKillstreakEffectId(secondary), player.GetKillstreakTierId(melee), player.GetKillstreakSheenId(melee), player.GetKillstreakEffectId(melee), effect[client], player.GetUnusualHatEffectId(), player.GetUnusualWeaponEffect(primary), player.GetUnusualWeaponEffect(secondary), player.GetUnusualWeaponEffect(melee), steamid);
-	PrintToServer(query);
+
+	if(IsValidEntity(primary)) {
+		FormatEx(query, sizeof(query), "UPDATE %s SET primaryTier='%i', primarySheen='%i', primaryEffect='%i', unusualPrimary='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary), player.GetUnusualWeaponEffect(primary), steamid);
+		PrintToServer("[DEBUG] %s", query);
+		WearablesDB.Query(SQLError, query);
+	}
+
+	if(IsValidEntity(secondary)) {
+		FormatEx(query, sizeof(query), "UPDATE %s SET secondaryTier='%i', secondarySheen='%i', secondaryEffect='%i', unusualSecondary='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(secondary), player.GetKillstreakSheenId(secondary), player.GetKillstreakEffectId(secondary), player.GetUnusualWeaponEffect(secondary), steamid);
+		PrintToServer("[DEBUG] %s", query);
+		WearablesDB.Query(SQLError, query);
+	}
+
+	if(IsValidEntity(melee)) {
+		FormatEx(query, sizeof(query), "UPDATE %s SET meleeTier='%i', meleeSheen='%i', meleeEffect='%i', unusualMelee='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(melee), player.GetKillstreakSheenId(melee), player.GetKillstreakEffectId(melee), player.GetUnusualWeaponEffect(melee), steamid);
+		PrintToServer("[DEBUG] %s", query);
+		WearablesDB.Query(SQLError, query);
+	}
+
+	FormatEx(query, sizeof(query), "UPDATE %s SET unusualTauntId='%s', unusualHatId='%i' WHERE steamid='%s'", buffer, effect[client], player.GetUnusualHatEffectId(), steamid);
+	PrintToServer("[DEBUG] %s", query);
 	WearablesDB.Query(SQLError, query);
 }
 
@@ -1353,16 +1371,6 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 
 	FetchWearables(client, steamid);	// Fetch the wearable set from the database.
 
-	Player player	 = Player(client);
-
-	// These will be valid entities on resupply due to player has be alive for resupply to take place.
-	int	   primary	 = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
-	int	   secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
-	int	   melee	 = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
-
-	if (!IsValidEntity(primary) || !IsValidEntity(secondary) || !IsValidEntity(melee))
-		return Plugin_Continue;
-
 	// Item attribute 2025 is a attribute definition for killstreak tiers
 	// Item attribute 2014 is a attribute definition for killstreak sheens
 	// Item attribute 2013 is a attribute definition for killstreak effects
@@ -1370,37 +1378,57 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 
 	// OnResupply, ensure to override default item attributes again with desired attributes.
 	// Primary Weapons
-	if (player.GetKillstreakTierId(primary) > 0)											   // Only do if player has selected a killstreak tier
-		TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary)));	   // Updates killstreak tier attribute to selected value
-	if (player.GetKillstreakSheenId(primary) > 0)
-		TF2Attrib_SetByDefIndex(primary, 2014, float(player.GetKillstreakSheenId(primary)));
-	if (player.GetKillstreakEffectId(primary) > 0)
-		TF2Attrib_SetByDefIndex(primary, 2013, float(player.GetKillstreakEffectId(primary)));
 
-	// Secondary Weapons
-	if (player.GetKillstreakTierId(secondary) > 0)												   // Only do if player has selected a killstreak tier
-		TF2Attrib_SetByDefIndex(secondary, 2025, float(player.GetKillstreakTierId(secondary)));	   // Updates killstreak tier attribute to selected value
-	if (player.GetKillstreakSheenId(secondary) > 0)
-		TF2Attrib_SetByDefIndex(secondary, 2014, float(player.GetKillstreakSheenId(secondary)));
-	if (player.GetKillstreakEffectId(secondary) > 0)
-		TF2Attrib_SetByDefIndex(secondary, 2013, float(player.GetKillstreakEffectId(secondary)));
-
-	// Melee Weapons
-	if (player.GetKillstreakTierId(melee) > 0)											   // Only do if player has selected a killstreak tier
-		TF2Attrib_SetByDefIndex(melee, 2025, float(player.GetKillstreakTierId(melee)));	   // Updates killstreak tier attribute to selected value
-	if (player.GetKillstreakSheenId(melee) > 0)
-		TF2Attrib_SetByDefIndex(melee, 2014, float(player.GetKillstreakSheenId(melee)));
-	if (player.GetKillstreakEffectId(melee) > 0)
-		TF2Attrib_SetByDefIndex(melee, 2013, float(player.GetKillstreakEffectId(melee)));
-
-	if (player.GetUnusualWeaponEffect(primary) > 0)
-		TF2Attrib_SetByDefIndex(primary, 134, float(player.GetUnusualWeaponEffect(primary)));
-	if (player.GetUnusualWeaponEffect(secondary) > 0)
-		TF2Attrib_SetByDefIndex(secondary, 134, float(player.GetUnusualWeaponEffect(secondary)));
-	if (player.GetUnusualWeaponEffect(melee) > 0)
-		TF2Attrib_SetByDefIndex(melee, 134, float(player.GetUnusualWeaponEffect(melee)));
+	RequestFrame(ProcessWeaponsHandler, client);
 
 	return Plugin_Handled;
+}
+
+void ProcessWeaponsHandler(int client) {
+	Player player	 = Player(client);
+
+	// These will be valid entities on resupply due to player has be alive for resupply to take place.
+	int	   primary	 = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
+	int	   secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
+	int	   melee	 = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+
+	if(IsValidEntity(primary)) {
+		PrintToServer("[DEBUG] Primary found on client %d", client);
+		if (player.GetKillstreakTierId(primary) > 0)											   // Only do if player has selected a killstreak tier
+			TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary)));	   // Updates killstreak tier attribute to selected value
+		if (player.GetKillstreakSheenId(primary) > 0)
+			TF2Attrib_SetByDefIndex(primary, 2014, float(player.GetKillstreakSheenId(primary)));
+		if (player.GetKillstreakEffectId(primary) > 0)
+			TF2Attrib_SetByDefIndex(primary, 2013, float(player.GetKillstreakEffectId(primary)));
+		if (player.GetUnusualWeaponEffect(primary) > 0)
+			TF2Attrib_SetByDefIndex(primary, 134, float(player.GetUnusualWeaponEffect(primary)));
+	}
+
+	// Secondary Weapons
+	if(IsValidEntity(secondary)) {
+		PrintToServer("[DEBUG] Secondary found on client %d", client);
+		if (player.GetKillstreakTierId(secondary) > 0)												   // Only do if player has selected a killstreak tier
+			TF2Attrib_SetByDefIndex(secondary, 2025, float(player.GetKillstreakTierId(secondary)));	   // Updates killstreak tier attribute to selected value
+		if (player.GetKillstreakSheenId(secondary) > 0)
+			TF2Attrib_SetByDefIndex(secondary, 2014, float(player.GetKillstreakSheenId(secondary)));
+		if (player.GetKillstreakEffectId(secondary) > 0)
+			TF2Attrib_SetByDefIndex(secondary, 2013, float(player.GetKillstreakEffectId(secondary)));
+		if (player.GetUnusualWeaponEffect(secondary) > 0)
+			TF2Attrib_SetByDefIndex(secondary, 134, float(player.GetUnusualWeaponEffect(secondary)));
+	}
+	
+	// Melee Weapons
+	if(IsValidEntity(melee)) {
+		PrintToServer("[DEBUG] Melee found on client %d", client);
+		if (player.GetKillstreakTierId(melee) > 0)											   // Only do if player has selected a killstreak tier
+			TF2Attrib_SetByDefIndex(melee, 2025, float(player.GetKillstreakTierId(melee)));	   // Updates killstreak tier attribute to selected value
+		if (player.GetKillstreakSheenId(melee) > 0)
+			TF2Attrib_SetByDefIndex(melee, 2014, float(player.GetKillstreakSheenId(melee)));
+		if (player.GetKillstreakEffectId(melee) > 0)
+			TF2Attrib_SetByDefIndex(melee, 2013, float(player.GetKillstreakEffectId(melee)));
+		if (player.GetUnusualWeaponEffect(melee) > 0)
+			TF2Attrib_SetByDefIndex(melee, 134, float(player.GetUnusualWeaponEffect(melee)));
+	}
 }
 
 // Command Handlers
@@ -1894,6 +1922,32 @@ void CreateTempParticle(char[] particle, int entity = -1, float origin[3] = NULL
 	TE_SendToAll();										 // Send temporary entity to all players.
 }
 
+// public Action TFParticleHook(const char[] strTEName, const int[] iClients, int iNumClients, float fDelay) {
+
+// 	TE_Start("TFParticleEffect");
+	
+// 	static float vecNormal[3]; TE_ReadVector("m_vecNormal", vecNormal);
+// 	static float vecAngles[3]; TE_ReadVector("m_vecAngles", vecAngles);
+	
+// 	TE_WriteFloat("m_vecOrigin[0]", TE_ReadFloat("m_vecOrigin[0]"));
+// 	TE_WriteFloat("m_vecOrigin[1]", TE_ReadFloat("m_vecOrigin[1]"));
+// 	TE_WriteFloat("m_vecOrigin[2]", TE_ReadFloat("m_vecOrigin[2]"));
+	
+// 	TE_WriteFloat("m_vecStart[0]", TE_ReadFloat("m_vecStart[0]"));
+// 	TE_WriteFloat("m_vecStart[1]", TE_ReadFloat("m_vecStart[1]"));
+// 	TE_WriteFloat("m_vecStart[2]", TE_ReadFloat("m_vecStart[2]"));
+// 	TE_WriteVector("m_vecAngles", vecAngles);
+	
+// 	TE_WriteNum("m_iParticleSystemIndex", TE_ReadNum("m_iParticleSystemIndex"));
+// 	TE_WriteNum("entindex", TE_ReadNum("entindex"));
+// 	TE_WriteNum("m_iAttachType", TE_ReadNum("m_iAttachType"));
+// 	TE_WriteNum("m_bResetParticles", TE_ReadNum("m_bResetParticles"));
+
+// 	TE_Send(iClients, iNumClients, fDelay);
+	
+// 	return Plugin_Continue;
+// }
+
 // ClearTempParticles()
 // Dummy function used to easier remove all temporary entities from target entity.
 void ClearTempParticles(int client)
@@ -1945,19 +1999,17 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemInd
 
 // return Plugin_Changed;
 // }
-public Action ProcessHats(int client, int itemIndex, Handle &hItem)
+public void ProcessHats(int client, int itemIndex, Handle &hItem)
 {
 	Player player = Player(client);	   // Initialize our player method map to save, store and update wearable effects.
 
 	if (hatIDList.FindValue(itemIndex) == -1)
-		return Plugin_Continue;
+		return;
 
 	TF2Items_SetNumAttributes(hItem, 1);	// Set number of attributes to change
 
 	TF2Items_SetQuality(hItem, 5);													// Set to unusual quality.
 	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualHatEffectId()));	// Set "attach particle (134) attribute to players desired unusual effect."
-
-	return Plugin_Changed;	  // Update the players item.
 }
 
 // public Action ProcessWeapons(int client, char[] className, int itemIndex, Handle &hItem) {
