@@ -29,8 +29,9 @@ int		  unusualHatEffect[MAXPLAYERS + 1];
 int		  unusualWeaponEffect[MAXPLAYERS + 1][MAX_ENTITY_SIZE];
 
 ArrayList hatIDList;		  // ArrayList to store all hat ids we can apply unusual effects too in-game
+ArrayList unusualEffectNameList; // Array list to store all unusual effect names for menu creation.
+ArrayList unusualEffectIDList;	  // Array list to store all unusual effect ids for menu creation.
 ArrayList tauntEffectList;	  // Arraylist to store all taunt unusual effects in the game.
-ArrayList tauntEffectIDList; // Arraylist to store all taunt unusual effect IDs in the game.
 ArrayList tauntEffectNameList; // Arraylist to store taunt unusual effect names for menu creation.
 
 // temporary variables
@@ -95,261 +96,6 @@ char weaponSlotMenuItems[][] = {
 	"Melee"
 };
 
-// unusualMenuItems showed when selecting Unusual Hat menu from main menu, all entries here are for display names only. Matches unusualHatSel int array.
-char unusualMenuItems[][] = {
-	"Green Confetti",
-	"Purple Confetti",
-	"Haunted Ghosts",
-	"Green Energy",
-	"Purple Energy",
-	"Circling TF Logo",
-	"Massed Flies",
-	"Burning Flames",
-	"Scorching Flames",
-	"Sunbeams",
-	"Map Stamps",
-	"Stormy Storm",
-	"Orbiting Fire",
-	"Bubbling",
-	"Smoking",
-	"Steaming",
-	"Cloudy Moon",
-	"Kill-a-Watt",
-	"Terror-Watt",
-	"Cloud 9",
-	"Time Warp",
-	"Searing Plasma",
-	"Vivid Plasma",
-	"Circling Peace Sign",
-	"Circling Heart",
-	"Genteel Smoke",
-	"Blizzardy Storm",
-	"Nuts n' Bolts",
-	"Orbiting Planets",
-	"Flaming Lantern",
-	"Cauldron Bubbles",
-	"Eerie Orbiting Fire",
-	"Knifestorm",
-	"Misty Skull",
-	"Harvest Moon",
-	"It's a Secret to Everybody",
-	"Stormy 13th Hour",
-	"Aces High",
-	"Dead Presidents",
-	"Miami Nights",
-	"Disco Beat Down",
-	"Phosphorous",
-	"Sulphurous",
-	"Memory Leak",
-	"Overclocked",
-	"Electrostatic",
-	"Power Surge",
-	"Anti-Freeze",
-	"Green Black Hole",
-	"Roboactive",
-	"Arcana",
-	"Spellbound",
-	"Chiroptera Venenata",
-	"Poisoned Shadows",
-	"Something Burning This Way Comes",
-	"Hellfire",
-	"Darkblaze",
-	"Demonflame",
-	"Bonzo The All-Gnawing",
-	"Amaranthine",
-	"Stare from Beyond",
-	"The Ooze",
-	"Ghastly Ghosts Jr",
-	"Haunted Phantasm Jr",
-	"Frostbite",
-	"Molten Mallard",
-	"Morning Glorly",
-	"Death at Dusk",
-	"Abduction",
-	"Atomic",
-	"Subatomic",
-	"Electric Hat Protector",
-	"Magnetic Hat Protector",
-	"Voltaic Hat Protector",
-	"Galactic Codex",
-	"Ancient Codex",
-	"Nebula",
-	"Death by Disco",
-	"It's a mystery to everyone",
-	"It's a puzzle to me",
-	"Ether Trail",
-	"Nether Trail",
-	"Ancient Eldritch",
-	"Eldritch Flame",
-	"Tesla Coil",
-	"Neutron Star",
-	"Starstorm Insomnia",
-	"Starstorm Slumber",
-	"Brain Drain",
-	"Open Mind",
-	"Head of Storm",
-	"Galactic Gateway",
-	"The Eldritch Opening",
-	"The Dark Doorway",
-	"Ring of Fire",
-	"Vicious Circle",
-	"White Lightning",
-	"Omniscient Orb",
-	"Clairvoyance",
-	"Fifth Dimension",
-	"Vicious Vortex",
-	"Menacing Miasma",
-	"Abyssal Aura",
-	"Wicked Wood",
-	"Ghastly Grove",
-	"Mystical Medley",
-	"Ethreal Essence",
-	"Twisted Radiance",
-	"Violet Vortex",
-	"Verdant Vortex",
-	"Valiant Vortex",
-	"Sparkling Lights",
-	"Frozen Icefall",
-	"Fragmented Gluons",
-	"Fragmented Quarks",
-	"Fragmented Photons",
-	"Defragmenting Reality",
-	"Fragmenting Reality",
-	"Refragmenting Reality",
-	"Snowfallen",
-	"Snowblinded",
-	"Pyroland Daydream",
-	"Verdatica",
-	"Aromatica",
-	"Chromatica",
-	"Prismatica",
-	"Bee Swarm",
-	"Frisky Fireflies",
-	"Smoldering Spirits",
-	"Wandering Wasps",
-	"Kaleidoscope",
-	"Green Giggler",
-	"Laugh-O-Lantern",
-	"Plum Prankster",
-	"Pyroland Nightmare",
-	"Gravelly Ghoul",
-	"Vexed Volcanics",
-	"Gourdian Angel",
-	"Pumpkin Party",
-	"Frozen Fractals",
-	"Lavender Landfall",
-	"Special Snowfall",
-	"Divine Desire",
-	"Distant Dream",
-	"Violent Wintertide",
-	"Blighted Snowstorm",
-	"Pale Nimbus",
-	"Genus Plasmos",
-	"Serenus Lumen",
-	"Ventum Maris",
-	"Mirthful Mistletoe",
-	"Resonation",
-	"Aggradation",
-	"Lucidation",
-	"Stunning",
-	"Ardentum Saturnalis",
-	"Fragrancium Elementalis",
-	"Reverium Irregularis",
-	"Perennial Petals",
-	"Flavorsome Sunset",
-	"Raspberry Bloom",
-	"Iridescence",
-	"Tempered Thorns",
-	"Devilish Diablo",
-	"Severed Serration",
-	"Shrieking Shades",
-	"Restless Wraiths",
-	"Infernal Wraith",
-	"Phantom Crown",
-	"Ancient Specter",
-	"Viridescent Peeper",
-	"Eyes of Molten",
-	"Ominous Stare",
-	"Pumpkin Moon",
-	"Frantic Spooker",
-	"Frightened Poltergeist",
-	"Energetic Haunter",
-	"Smissmas Tree",
-	"Hospitable Festivity",
-	"Condescending Embrace",
-	"Sparkling Spruce",
-	"Glittering Juniper",
-	"Prismatic Pine",
-	"Spiraling Lights",
-	"Twisting Lights",
-	"Stardust Pathway",
-	"Flurry Rush",
-	"Spark of Smissmas",
-	"Polar Forecast",
-	"Shining Stag",
-	"Holiday Horns",
-	"Ardent Antlers",
-	"Festive Lights",
-	"Crustacean Sensation",
-	"Frosted Decadence",
-	"Sprinkled Delights",
-	"Terrestrial Favor",
-	"Tropical Thrill",
-	"Flourishing Passion",
-	"Dazzling Fireworks",
-	"Blazing Fireworks",
-	"Twinkling Fireworks",
-	"Sparkling Fireworks",
-	"Glowing Fireworks",
-	"Flying Lights",
-	"Limelight",
-	"Shining Star",
-	"Cold Cosmos",
-	"Refracting Fractals",
-	"Startrance",
-	"Starlush",
-	"Starfire",
-	"Stardust",
-	"Contagious Eruption",
-	"Daydream Eruption",
-	"Volcanic Eruption",
-	"Divine Sunlight",
-	"Audiophile",
-	"Soundwave",
-	"Synesthesia",
-	"Haunted Kraken",
-	"Eerie Kraken",
-	"Soulful Slice",
-	"Horsemann's Hack",
-	"Haunted Forever!",
-	"Forever And Forever!",
-	"Cursed Forever!",
-	"Moth Plague",
-	"Malevolent Monoculi",
-	"Haunted Wick",
-	"Wicked Wick",
-	"Spectral Wick",
-	"Musical Maelstrom",
-	"Verdant Virtuoso",
-	"Silver Serenade",
-	"Cosmic Constellations",
-	"Dazzling Constellations",
-	"Tainted Frost",
-	"Starlight Haze",
-	"Hard Carry",
-	"Jellyfish Field",
-	"Jellyfish Hunter",
-	"Jellyfish Jam",
-	"Global Clusters",
-	"Celestial Starburst",
-	"Sylicone Succiduous",
-	"Sakura Smoke Bomb",
-	"Treasure Trove",
-	"Bubble Breeze",
-	"Fireflies",
-	"Mountain Halo",
-};
-
 char unusualWeaponMenuItems[][] = {	   // Unusual weapon effects in menu, matches unusualWeaponSel int array
 	"Hot",
 	"Isotope",
@@ -377,261 +123,6 @@ int unusualWeaponSel[] = {
 	702,	// Isotope
 	703,	// Cool
 	704		// Energy Orb
-};
-
-// These are all the different unusual effects which can be applied to a players hat. Matches with unusualMenuItems string array.
-int unusualHatSel[] = {
-	6,		// Green Confetti
-	7,		// Purple Confetti
-	8,		// Haunted Ghosts
-	9,		// Green Energy
-	10,		// Purple Energy
-	11,		// Circling TF Logo
-	12,		// Massed Flies
-	13,		// Burning Flames
-	14,		// Scorching Flames
-	17,		// Sunbeams
-	20,		// Map Stamps
-	29,		// Stormy Storm
-	33,		// Orbiting Fire
-	34,		// Bubbling
-	35,		// Smoking
-	36,		// Steaming
-	38,		// Cloudy Moon
-	56,		// Kill-a-Watt,
-	57,		// Terror-Watt,
-	58,		// Cloud 9
-	70,		// Time Warp,
-	15,		// Searing Plasma
-	16,		// Vivid Plasma
-	18,		// Circling Peace Sign
-	19,		// Circling Heart
-	28,		// Genteel Smoke,
-	30,		// Blizzardy Storm,
-	31,		// Nuts n' Bolts,
-	32,		// Orbiting Planets,
-	37,		// Flaming Lantern,
-	39,		// Cauldron Bubbles
-	40,		// Eerie Orbiting Fire,
-	43,		// Knifestorm
-	44,		// Misty Skull
-	45,		// Harvest Moon
-	46,		// It's a Secret to Everybody
-	47,		// Stormy 13th Hour
-	59,		// Aces High
-	60,		// Dead Presidents
-	61,		// Miami Nights
-	62,		// Disco Beat Down
-	63,		// Phosphorous
-	64,		// Sulphurous
-	65,		// Memory Leak
-	66,		// Overclocked
-	67,		// Electrostatic
-	68,		// Power Surge
-	69,		// Anti-Freeze
-	71,		// Green Black Hole
-	72,		// Roboactive
-	73,		// Arcana
-	74,		// Spellbound
-	75,		// Chiroptera Venenata
-	76,		// Poisoned Shadows
-	77,		// Something Burning This Way Comes
-	78,		// Hellfire
-	79,		// Darkblaze
-	80,		// Demonflame
-	81,		// Bonzo The All-Gnawing,
-	82,		// Amaranthine
-	83,		// Stare from Beyond
-	84,		// The Ooze
-	85,		// Ghastly Ghosts Jr
-	86,		// Haunted Phantasm Jr
-	87,		// Frostbite
-	88,		// Molten Mallard
-	89,		// Morning Glory
-	90,		// Death at Dusk
-	91,		// Abduction
-	92,		// Atomic
-	93,		// Subatomic
-	94,		// Electric Hat Protector
-	95,		// Magnetic Hat Protector
-	96,		// Voltaic Hat Protector
-	97,		// Galactic Codex
-	98,		// Ancient Codex
-	99,		// Nebula
-	100,	// Death By Disco
-	101,	// It's a mystery to everyone
-	102,	// It's a puzzle to me
-	103,	// Ether Trail
-	104,	// Nether Trail
-	105,	// Ancient Eldritch
-	106,	// Eldritch Flame
-	108,	// Tesla Coil
-	107,	// Neutron Star
-	109,	// Starstorm Insomnia
-	110,	// Starstorm Slumber
-	111,	// Brain Drain
-	112,	// Open Mind
-	113,	// Head of Steam
-	114,	// Galactic Gateway
-	115,	// The Eldritch Opening
-	116,	// The Dark Doorway
-	117,	// Ring of Fire
-	118,	// Vicious Circle
-	119,	// White Lightning
-	120,	// Omniscient Orb
-	121,	// Clairvoyance
-	122,	// Fifth Dimension
-	123,	// Vicious Vortex
-	124,	// Menacing Miasma,
-	125,	// Abyssal Aura
-	126,	// Wicked Wood
-	127,	// Ghastly Grove
-	128,	// Mystical Medley
-	129,	// Ethereal Essence
-	130,	// Twisted Radiance
-	131,	// Violet Vortex
-	132,	// Verdant Vortex
-	133,	// Vallant Vortex
-	134,	// Sparkling Lights
-	135,	// Frozen Icefall
-	136,	// Fragmented Gluons
-	137,	// Fragmented Quarks
-	138,	// Fragmented Photons
-	139,	// Defragmenting Reality
-	141,	// Fragmenting Reality
-	142,	// Refragmenting Reality
-	143,	// Snowfallen
-	144,	// Snowblinded
-	145,	// Pyroland Daydream
-	147,	// Verdatica
-	148,	// Aromatica
-	149,	// Chromatica
-	150,	// Prismatica
-	151,	// Bee Swarm
-	152,	// Frisky Fireflies
-	153,	// Smoldering Spirits
-	154,	// Wandering Wisps
-	155,	// Kaleidoscope
-	156,	// Green Giggler
-	157,	// Laugh-O-Lantern
-	158,	// Plum Prankster
-	159,	// Pyroland Nightmare
-	160,	// Gravelly Ghoul
-	161,	// Vexed Volcanics
-	162,	// Gourdian Angel
-	163,	// Pumpkin Party
-	164,	// Frozen Fractals
-	165,	// Lavender Landfall
-	166,	// Special Snowfall
-	167,	// Divine Desire
-	168,	// Distant Dream
-	169,	// Violent Watertide
-	170,	// Blighted Snowstorm
-	171,	// Pale Nimbus
-	172,	// Genus Plasmos
-	173,	// Serenus Lumen
-	174,	// Ventum Maris
-	175,	// Mirthful Mistletoe
-	177,	// Resonation
-	178,	// Aggradation
-	179,	// Lucidation
-	180,	// Stunning
-	181,	// Ardentum Saturnalis
-	182,	// Fragrancium Elementalis
-	183,	// Reverium Irregularis
-	185,	// Perennial Petals
-	186,	// Flavorsome Sunset
-	187,	// Raspberry Bloom
-	188,	// Iridescence
-	189,	// Tempered Thorns
-	190,	// Devilish Diablo
-	191,	// Severed Serration
-	192,	// Shrieking Shades
-	193,	// Restless Wraiths
-	195,	// Infernal Wraith
-	196,	// Phantom Crown
-	197,	// Ancient Specter,
-	198,	// Viridescent Peeper
-	199,	// Eyes of Molten
-	200,	// Ominous Stare
-	201,	// Pumpkin Moon
-	202,	// Frantic Spooker
-	203,	// Frightened Poltergeist
-	204,	// Energetic Hunter
-	205,	// Smissmas Tree
-	206,	// Hospitable Festivity
-	207,	// Condescending Embrace
-	209,	// Sparkling Spruce
-	210,	// Glittering Juniper
-	211,	// Prismatic Pine
-	212,	// Spiraling Lights
-	213,	// Twisting Lights
-	214,	// Stardust Pathway
-	215,	// Flurry Rush
-	216,	// Spark of Smissmas
-	218,	// Polar Forecast
-	219,	// Shining Stag
-	220,	// Holiday Horns
-	221,	// Ardent Antlers
-	223,	// Festive Lights
-	224,	// Crustacean Sensation
-	226,	// Frosted Decadence
-	228,	// Sprinkled Delights
-	229,	// Terrestial Favor
-	230,	// Tropical Thrill
-	231,	// Flourishing Passion
-	232,	// Dazzling Fireworks
-	233,	// Blazing Fireworks
-	235,	// Twinkling Fireworks
-	236,	// Sparkling Fireworks
-	237,	// Glowing Fireworks
-	239,	// Flying Lights
-	241,	// Limelight
-	242,	// Shining Star
-	243,	// Cold Cosmos
-	244,	// Refracting Fractals
-	245,	// Startrance
-	247,	// Starlush
-	248,	// Starfire
-	249,	// Stardust
-	250,	// Contagious Eruption
-	251,	// Daydream Eruption
-	252,	// Volcanic Eruption
-	253,	// Divine Sunlight
-	254,	// Audiophile
-	255,	// Soundwave
-	256,	// Synesthesia
-	257,	// Haunted Kraken
-	258,	// Eerie Kraken
-	259,	// Soulful Slice
-	260,	// Horsemann's Hack
-	261,	// Haunted Forever!
-	263,	// Forever And Forever!
-	264,	// Cursed Forever!
-	265,	// Moth Plague
-	266,	// Malevolent Monoculi
-	267,	// Haunted Wick
-	269,	// Wicked Wick
-	270,	// Spectral Wick
-	271,	// Musical Maelstrom
-	272,	// Verdant Virtuoso
-	273,	// Silver Serenade
-	274,	// Cosmic Constellations
-	276,	// Dazzling Constellations
-	277,	// Tainted Frost
-	278,	// Starlight Haze
-	279,	// Hard Carry
-	281,	// Jellyfish Field
-	283,	// Jellyfish Hunter
-	284,	// Jellyfish Jam
-	285,	// Global Clusters
-	286,	// Celestial Starburst
-	287,	// Sylicone Succiduous
-	288,	// Sakura Smoke Bomb
-	289,	// Treasure Trove
-	290,	// Bubble Breeze
-	291,	// Fireflies
-	292,	// Mountain Halo
 };
 
 // These are the three different type of effects which can be applied to a single weapon slot. Matches killStreakTierMenuItems string array.
@@ -689,15 +180,15 @@ public void OnPluginStart()
 	// In-game events the plugin should listen to.
 	// If other plugins are manually invoking these events, THESE EVENTS WILL FIRE. (Bad practice to manually invoke events anyways)
 	HookEvent("post_inventory_application", OnResupply);	// When player touches resupply locker, respawns or manually invokes a refresh of player items.
-	HookEvent("player_regenerate", OnResupply);
 
 	// Admin Commands
 	RegAdminCmd("sm_wearables", WearablesCommand, ADMFLAG_RESERVATION, "Shows the wearables menu.");	// Translates to /wearables in-game
 
 	// Initialize new ArrayList to store all hat id's inside game, used in ReadItemSchema()
-	hatIDList			= new ArrayList();
+	hatIDList			= new ArrayList(ByteCountToCells(512));
+	unusualEffectNameList 		= new ArrayList(ByteCountToCells(512));
+	unusualEffectIDList 		= new ArrayList(ByteCountToCells(512));
 	tauntEffectList 	= new ArrayList(ByteCountToCells(512));
-	tauntEffectIDList 	= new ArrayList(ByteCountToCells(512));
 	tauntEffectNameList = new ArrayList(ByteCountToCells(512));
 
 	ReadItemSchema();
@@ -710,6 +201,7 @@ public void OnPluginStart()
 	tfp.Init();
 	tfp.OnKeyValue = OnTranslationPair;
 
+	// cheers nosoup for the stocksoup collection :)
 	// the file must be opened in binary mode
     // it's also recommended to set use_valve_fs to ensure it can be read even
     // if if is mounted from a different directory
@@ -721,15 +213,22 @@ public void OnPluginStart()
 	Database.Connect(DatabaseHandler, dbname);	  // Pass string buffer to connect method.
 }
 
-/**
- * Extract localizations.
- */
 void OnTranslationPair(const char[] key, const char[] value) {
 	// Loop through taunt effect ID list and match them with the key.
-    if (StrContains(key, "Attrib_Particle", true) != -1 && strlen(key) == 19) {
-		tauntEffectNameList.PushString(value);
-		LogMessage("key: %s, val: %s, size: %i", key, value, tauntEffectNameList.Length);
-    }
+	if(StrContains(key, "Attrib_Particle", true) != -1) {
+
+		// unusual hat effects
+		if(strlen(key) == 18 || strlen(key) == 17 || strlen(key) == 16) {
+			unusualEffectNameList.PushString(value);
+			// LogMessage("hatEffect added: key: %s, val: %s, size: %i", key, value, unusualEffectNameList.Length);	
+		}
+
+		// unusual taunts
+		if (strlen(key) == 19) {
+			tauntEffectNameList.PushString(value);
+			// LogMessage("tauntEffect added: key: %s, val: %s, size: %i", key, value, tauntEffectNameList.Length);
+		}
+	}
 }
 
 // Here we will setup the SQL table to store player preferences.
@@ -1374,11 +873,24 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 
 		case unusualMenu:
 		{	 // Unusual Hat Selection Menu
-			 // Loop through unusualHatMenuItems string array to add correct options.
-			for (int i = 0; i < sizeof(unusualMenuItems); i++)
-			{
-				menu.AddItem(unusualMenuItems[i], unusualMenuItems[i]);
+
+			char effectName[512];
+			char effectID[512];
+			
+			for(int i = 0; i < unusualEffectIDList.Length; i++) {
+				unusualEffectNameList.GetString(i, effectName, sizeof(effectName));
+				unusualEffectIDList.GetString(i, effectID, sizeof(effectID));
+
+				LogMessage("effectName: %s, effectID: %s", effectName, effectID);
+
+				menu.AddItem(effectID, effectName);
 			}
+
+			 // Loop through unusualHatMenuItems string array to add correct options.
+			// for (int i = 0; i < sizeof(unusualMenuItems); i++)
+			// {
+			// 	menu.AddItem(unusualMenuItems[i], unusualMenuItems[i]);
+			// }
 		}
 
 		case unusualWeaponMenu:
@@ -1641,12 +1153,14 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 			}
 
 			// Loop through unusualMenuItems string array
-			for (int i = 0; i < sizeof(unusualMenuItems); i++)
+			for (int i = 0; i < unusualEffectIDList.Length; i++)
 			{
 				// If value picked on the menu matches our string value, then set item attribute index to value matching at same index.
-				if (StrEqual(info, unusualMenuItems[i]))
+				unusualEffectIDList.GetString(i, tName, sizeof(tName));
+				if (StrEqual(info, tName))
 				{
-					player.SetUnusualHatEffectId(unusualHatSel[i]);
+					LogMessage("tName: %s", tName);
+					player.SetUnusualHatEffectId(StringToInt(tName));
 					MenuCreate(client, wearablesMenu, "Wearables Menu");
 					UpdateWearables(client, steamid);	 // Update the wearable attributes set by player by writing changes to database.
 					break;
@@ -1805,7 +1319,9 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemInd
 {
 	hItem = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES);	   // Assign our item to be changing, we want to be keeping the old attributes of the players item but also overriding any we wish.
 
-	ProcessHats(client, itemIndex, hItem);
+	if(StrEqual(className, "tf_wearable"))
+		ProcessHats(client, itemIndex, hItem);
+
 	// ProcessWeapons(client, className, itemIndex, hItem);
 
 	return Plugin_Changed;
@@ -1843,17 +1359,20 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemInd
 
 // return Plugin_Changed;
 // }
-public void ProcessHats(int client, int itemIndex, Handle &hItem)
+public Action ProcessHats(int client, int itemIndex, Handle &hItem)
 {
 	Player player = Player(client);	   // Initialize our player method map to save, store and update wearable effects.
 
 	if (hatIDList.FindValue(itemIndex) == -1)
-		return;
+		return Plugin_Continue;
 
-	TF2Items_SetNumAttributes(hItem, 1);	// Set number of attributes to change
+	TF2Items_SetNumAttributes(hItem, 2);	// Set number of attributes to change
 
 	TF2Items_SetQuality(hItem, 5);													// Set to unusual quality.
-	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualHatEffectId()));	// Set "attach particle (134) attribute to players desired unusual effect."
+	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualHatEffectId()));	// Set "attach particle (134) attribute to players desired unusual effect.
+	TF2Items_SetAttribute(hItem, 1, 520, 1.0);
+
+	return Plugin_Changed;
 }
 
 // public Action ProcessWeapons(int client, char[] className, int itemIndex, Handle &hItem) {
@@ -1938,6 +1457,7 @@ public void ReadItemSchema()
 	char reFireTime[64];
 	char tauntEffect[256];
 	char tauntEffectID[512];
+	char hatEffectID[512];
 	char sectionName[256];
 
 	do
@@ -1959,14 +1479,42 @@ public void ReadItemSchema()
 					// TODO: Track which taunts have refire times and make sure to apply them properly in the plugin, also add a blacklist function for broken effects.
 					LogMessage("%s has refire time of %s seconds.", tauntEffect, reFireTime);
 				}
-				// PrintToServer("Found unusual taunt effect %s ID: %s, adding to list.", tauntEffect, tauntEffectID);
 				tauntEffectList.PushString(tauntEffect);
-				tauntEffectIDList.PushString(tauntEffectID);
 			}
 			while (kv.GotoNextKey());
+
+			kv.GoBack();
 		}
-		else
-			kv.GotoNextKey();
+
+		if (strcmp(sectionName, "other_particles") == 0) {
+			do
+			{
+				kv.GotoFirstSubKey();
+				kv.GetSectionName(hatEffectID, sizeof(hatEffectID));
+
+				LogMessage("hatEffectID: %s", hatEffectID);
+
+				unusualEffectIDList.PushString(hatEffectID);
+			}
+			while (kv.GotoNextKey());
+
+			kv.GoBack();
+		}
+
+		if (strcmp(sectionName, "cosmetic_unusual_effects") == 0) {
+			do
+			{
+				kv.GotoFirstSubKey();
+				kv.GetSectionName(hatEffectID, sizeof(hatEffectID));
+
+				LogMessage("hatEffectID: %s", hatEffectID);
+
+				unusualEffectIDList.PushString(hatEffectID);
+			}
+			while (kv.GotoNextKey());
+
+			kv.GoBack();
+		}
 	}
 	while (kv.GotoNextKey());
 
