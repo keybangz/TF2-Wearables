@@ -6,6 +6,7 @@
 #include <clientprefs>
 #include <sdktools>
 #include <tf_econ_data>
+#include <stocksoup/textparse>
 
 #pragma newdecls required	 // Force Transitional Syntax
 #pragma semicolon 1			 // Force semicolon mode
@@ -29,6 +30,8 @@ int		  unusualWeaponEffect[MAXPLAYERS + 1][MAX_ENTITY_SIZE];
 
 ArrayList hatIDList;		  // ArrayList to store all hat ids we can apply unusual effects too in-game
 ArrayList tauntEffectList;	  // Arraylist to store all taunt unusual effects in the game.
+ArrayList tauntEffectIDList; // Arraylist to store all taunt unusual effect IDs in the game.
+ArrayList tauntEffectNameList; // Arraylist to store taunt unusual effect names for menu creation.
 
 // temporary variables
 // we are gonna use these to keep track of effect per slot in the menu handler
@@ -345,211 +348,6 @@ char unusualMenuItems[][] = {
 	"Bubble Breeze",
 	"Fireflies",
 	"Mountain Halo",
-};
-
-// unusualTauntMenuItems showed when selecting Unusual Taunt menu from main menu, all entries here are for display names only. Matches unusualTauntMenuItemIds string array.
-char unusualTauntMenuItems[][] = {
-	"Showstopper (RED)",
-	"Showstopper (BLU)",
-	"Holy Grail",
-	"'72",
-	"Fountain of Delight",
-	"Screaming Tiger",
-	"Skill Gotten Gains",
-	"Midnight Whirlwind",
-	"Silver Cyclone",
-	"Mega Strike",
-	"Haunted Phantasm",
-	"Ghastly Ghosts",
-	"Hellish Inferno",
-	"Roaring Rockets",
-	"Acid Bubbles of Envy",
-	"Flammable Bubbles of Attraction",
-	"Poisonous Bubbles of Regret",
-	"Bewitched",
-	"Accursed",
-	"Enchanted",
-	"Static Mist",
-	"Eerie Lightning",
-	"Terrifying Thunder",
-	"Jarate Shock",
-	"Nether Void",
-	"Good-Hearted Goodies",
-	"Wintery Wisp",
-	"Arctic Aurora",
-	"Winter Spirit",
-	"Festive Spirit",
-	"Magical Spirit",
-	"Spectral Escort",			  // May require TempEnt
-	"Astral Presence",			  // May require TempEnt
-	"Arcane Assistance (RED)",	  // May require TempEnt
-	"Arcane Assistance (BLU)",	  // May require TempEnt
-	"Emerald Allurement",		  // May require TempEnt
-	"Pyrophoric Personality",	  // May require TempEnt
-	"Spellbound Aspect",		  // May require TempEnt
-	"Toxic Terrors",			  // May require TempEnt
-	"Arachnid Assault",			  // May require TempEnt
-	"Creepy Crawlies",			  // May require TempEnt
-	"Delightful Star",			  // May require TempEnt
-	"Frosted Star",				  // May require TempEnt
-	"Apotheosis",
-	"Ascension",
-	"Twinkling Lights",		// May require TempEnt
-	"Shimmering Lights",	// May require TempEnt
-	"Cavalier de Carte (RED)",
-	"Cavalier de Carte (BLU)",
-	"Hollow Flourish",
-	"Magic Shuffle",
-	"Vigorous Pulse",
-	"Thundering Spirit",
-	"Galvanic Defiance",
-	"Wispy Halos",				// May require TempEnt
-	"Nether Wisps",				// May require TempEnt
-	"Aurora Borealis",			// May require TempEnt
-	"Aurora Australis",			// May require TempEnt
-	"Aurora Polaris",			// May require TempEnt
-	"Amethyst Winds",			// May require TempEnt
-	"Golden Gusts",				// May require TempEnt
-	"Smissmas Swirls (RED)",	// May require TempEnt
-	"Smissmas Swirls (BLU)",	// May require TempEnt
-	"Minty Cypress",
-	"Pristine Pine",
-	"Sparkly Spruce (RED)",
-	"Sparkly Spruce (BLU)",
-	"Festive Fever (RED)",
-	"Festive Fever (BLU)",
-	"Golden Glimmer",
-	"Frosty Silver",
-	"Glamorous Dazzle (RED)",
-	"Glamorous Dazzle (BLU)",
-	"Sublime Snowstorm",
-	"Marigold Ritual (RED)",
-	"Marigold Ritual (BLU)",
-	"Linguistic Deviation",
-	"Aurelian Seal",
-	"Runic Imprisonment (RED)",
-	"Runic Imprisonment (BLU)",
-	"Prismatic Haze",
-	"Rising Ritual (RED)",
-	"Rising Ritual (BLU)",
-	"Bloody Grip (RED)",
-	"Bloody Grip (BLU)",
-	"Toxic Grip",
-	"Infernal Grip",
-	"Death Grip",
-	"Charged Arcane",
-	"Thunderous Rage",
-	"Convulsive Fiery",
-	"Festivized Formation (RED)",
-	"Festivized Formation (BLU)",
-	"Boundless Blizzard",
-	"Floppin' Frenzy",
-	"Pastel Trance (RED)",
-	"Pastel Trance (BLU)",
-	"Wildflower Meadows"
-};
-
-// These are the unusual taunt menu item id's as matched in items_game.txt of TF2
-// REF: https://wiki.teamfortress.com/wiki/Item_schema
-char unusualTauntMenuItemIds[][] = {
-	"utaunt_firework_teamcolor_red",			 // Showstopper (RED)
-	"utaunt_firework_teamcolor_blue",			 // Showstopper (BLU)
-	"utaunt_beams_yellow",						 // Holy Grail
-	"utaunt_disco_party",						 // '72
-	"utaunt_hearts_glow_parent",				 // Fountain of Delight
-	"utaunt_meteor_parent",						 // Screaming Tiger
-	"utaunt_cash_confetti",						 // Skill Gotten Gains
-	"utaunt_tornado_parent_black",				 // Midnight Whirlwind
-	"utaunt_tornado_parent_white",				 // Silver Cyclone
-	"utaunt_lightning_parent",					 // Mega Strike
-	"utaunt_souls_green_parent",				 // Haunted Phantasm
-	"utaunt_souls_purple_parent",				 // Ghastly Ghosts
-	"utaunt_hellpit_parent",					 // Hellish Inferno
-	"utaunt_firework_dragon_parent",			 // Roaring Rockets
-	"utaunt_bubbles_glow_green_parent",			 // Acid Bubbles of Envy
-	"utaunt_bubbles_glow_orange_parent",		 // Flammable Bubbles of Attraction
-	"utaunt_bubbles_glow_purple_parent",		 // Poisonous Bubbles of Regret
-	"utaunt_arcane_purple_parent",				 // Bewitched
-	"utaunt_arcane_green_parent",				 // Accursed
-	"utaunt_arcane_yellow_parent",				 // Enchanted
-	"utaunt_electric_mist_parent",				 // Static Mist
-	"utaunt_electricity_cloud_parent_WP",		 // Eerie Lightning
-	"utaunt_electricity_cloud_parent_WB",		 // Terrifying Thunder
-	"utaunt_electricity_cloud_parent_WY",		 // Jarate Shock
-	"utaunt_portalswirl_purple_parent",			 // Nether Void
-	"utaunt_present_parent",					 // Good-Hearted Goodies
-	"utaunt_snowring_icy_parent",				 // Wintery Wisp
-	"utaunt_snowring_space_parent",				 // Arctic Aurora
-	"utaunt_spirit_winter_parent",				 // Winter Spirit
-	"utaunt_spirit_festive_parent",				 // Festive Spirit
-	"utaunt_spirit_magical_parent",				 // Magical Spirit
-	"utaunt_astralbodies_greenorange_parent",	 // Spectral Escort
-	"utaunt_astralbodies_tealpurple_parent",	 // Astral Presence
-	"utaunt_astralbodies_teamcolor_red",		 // Arcane Assistance (RED)
-	"utaunt_astralbodies_teamcolor_blue",		 // Arcane Assistance (BLU)
-	"utaunt_glowyplayer_green_parent",			 // Emerald Allurement
-	"utaunt_glowyplayer_orange_parent",			 // Pyrophoric Personality
-	"utaunt_glowyplayer_purple_parent",			 // Spellbound Aspect
-	"utaunt_spider_green_parent",				 // Toxic Terrors
-	"utaunt_spider_orange_parent",				 // Arachnid Assault
-	"utaunt_spider_purple_parent",				 // Creepy Crawlies
-	"utaunt_tf2smissmas_tree_parent",			 // Delightful Star
-	"utaunt_tf2smissmas_tree_parent_w",			 // Frosted Star
-	"utaunt_spirits_blue_parent",				 // Apotheosis
-	"utaunt_spirits_purple_parent",				 // Ascension
-	"utaunt_twinkling_rgb_parent",				 // Twinkling Lights
-	"utaunt_twinkling_goldsilver_parent",		 // Shimmering Lights
-	"utaunt_tarotcard_teamcolor_red",			 // Cavalier de Carte (RED)
-	"utaunt_tarotcard_teamcolor_blue",			 // Cavalier de Carte (BLU)
-	"utaunt_tarotcard_orange_parent",			 // Hollow Flourish
-	"utaunt_tarotcard_purple_parent",			 // Magic Shuffle
-	"utaunt_elebound_green_parent",				 // Vigorous Pulse
-	"utaunt_elebound_purple_parent",			 // Thundering Spirit
-	"utaunt_elebound_yellow_parent",			 // Galvanic Defiance
-	"utaunt_wispy_parent_g",					 // Wispy Halos
-	"utaunt_wispy_parent_p",					 // Nether Wisps
-	"utaunt_auroraglow_green_parent",			 // Aurora Borealis
-	"utaunt_auroraglow_orange_parent",			 // Aurora Australis
-	"utaunt_auroraglow_purple_parent",			 // Aurora Polaris
-	"utaunt_snowswirl_purple_parent",			 // Amethyst Winds
-	"utaunt_snowswirl_yellow_parent",			 // Golden Gusts
-	"utaunt_snowswirl_teamcolor_red",			 // Smissmas Swirls (RED)
-	"utaunt_snowswirl_teamcolor_blue",			 // Smissmas Swirls (BLU)
-	"utaunt_treespiral_green_parent",			 // Minty Cypress
-	"utaunt_treespiral_purple_parent",			 // Pristine Pine
-	"utaunt_treespiral_teamcolor_red",			 // Sparkly Spruce (RED)
-	"utaunt_treespiral_teamcolor_blue",			 // Sparkly Spruce (BLU)
-	"utaunt_gifts_teamcolor_red",				 // Festive Fever (RED)
-	"utaunt_gifts_teamcolor_blue",				 // Festive Fever (BLU)
-	"utaunt_glitter_parent_gold",				 // Golden Glimmer
-	"utaunt_glitter_parent_silver",				 // Frosty Silver
-	"utaunt_glitter_teamcolor_red",				 // Glamorous Dazzle (RED)
-	"utaunt_glitter_teamcolor_blue",			 // Glamorous Dazzle (BLU)
-	"utaunt_ice_parent",						 // Sublime Snowstorm
-	"utaunt_marigoldritual_teamcolor_red",		 // Marigold Ritual (RED)
-	"utaunt_marigoldritual_teamcolor_blue",		 // Marigold Ritual (BLU)
-	"utaunt_runeprison_green_parent",			 // Linguistic Deviation
-	"utaunt_runeprison_yellow_parent",			 // Aurelian Seal
-	"utaunt_runeprison_teamcolor_red",			 // Runic Imprisonment (RED)
-	"utaunt_runeprison_teamcolor_blue",			 // Runic Imprisonment (BLU)
-	"utaunt_prismatichaze_parent",				 // Prismatic Haze
-	"utaunt_risingsprit_teamcolor_red",			 // Rising Ritual (RED)
-	"utaunt_risingsprit_teamcolor_blue",		 // Rising Ritual (BLU)
-	"utaunt_hands_teamcolor_red",				 // Bloody Grip (RED)
-	"utaunt_hands_teamcolor_blue",				 // Bloody Grip (BLU)
-	"utaunt_hands_green_parent",				 // Toxic Grip
-	"utaunt_hands_orange_parent",				 // Infernal Grip
-	"utaunt_hands_purple_parent",				 // Death Grip
-	"utaunt_storm_parent_g",					 // Charged Arcane
-	"utaunt_storm_parent_k",					 // Thunderous Rage
-	"utaunt_storm_parent_o",					 // Convulsive Fiery
-	"utaunt_festivelights_teamcolor_red",		 // Festivized Formation (RED)
-	"utaunt_festivelights_teamcolor_blue",		 // Festivized Formation (BLU)
-	"utaunt_snowflakesaura_parent",				 // Boundless Blizzard
-	"utaunt_fish_parent",						 // Floppin' Frenzy
-	"utaunt_rainbow_teamcolor_red",				 // Pastel Trance (RED)
-	"utaunt_rainbow_teamcolor_blue",			 // Pastel Trance (BLU)
-	"utaunt_wild_meadows_parent"				 // Wildflower Meadows
 };
 
 char unusualWeaponMenuItems[][] = {	   // Unusual weapon effects in menu, matches unusualWeaponSel int array
@@ -891,13 +689,16 @@ public void OnPluginStart()
 	// In-game events the plugin should listen to.
 	// If other plugins are manually invoking these events, THESE EVENTS WILL FIRE. (Bad practice to manually invoke events anyways)
 	HookEvent("post_inventory_application", OnResupply);	// When player touches resupply locker, respawns or manually invokes a refresh of player items.
+	HookEvent("player_regenerate", OnResupply);
 
 	// Admin Commands
 	RegAdminCmd("sm_wearables", WearablesCommand, ADMFLAG_RESERVATION, "Shows the wearables menu.");	// Translates to /wearables in-game
 
 	// Initialize new ArrayList to store all hat id's inside game, used in ReadItemSchema()
-	hatIDList		= new ArrayList();
-	tauntEffectList = new ArrayList();
+	hatIDList			= new ArrayList();
+	tauntEffectList 	= new ArrayList(ByteCountToCells(512));
+	tauntEffectIDList 	= new ArrayList(ByteCountToCells(512));
+	tauntEffectNameList = new ArrayList(ByteCountToCells(512));
 
 	ReadItemSchema();
 
@@ -905,10 +706,30 @@ public void OnPluginStart()
 	char dbname[64];
 	cDatabaseName.GetString(dbname, sizeof(dbname));	// Grab database ConVar string value and store to buffer.
 
-	// AddTempEntHook("TFParticleEffect", TFParticleHook);
+	TranslationFileParser tfp;
+	tfp.Init();
+	tfp.OnKeyValue = OnTranslationPair;
+
+	// the file must be opened in binary mode
+    // it's also recommended to set use_valve_fs to ensure it can be read even
+    // if if is mounted from a different directory
+	File f = OpenFile("resource/tf_english.txt", "rb", .use_valve_fs = true);
+	tfp.ParseOpenUTF16File(f);
+	delete f;
 
 	// Connect to database here.
 	Database.Connect(DatabaseHandler, dbname);	  // Pass string buffer to connect method.
+}
+
+/**
+ * Extract localizations.
+ */
+void OnTranslationPair(const char[] key, const char[] value) {
+	// Loop through taunt effect ID list and match them with the key.
+    if (StrContains(key, "Attrib_Particle", true) != -1 && strlen(key) == 19) {
+		tauntEffectNameList.PushString(value);
+		LogMessage("key: %s, val: %s, size: %i", key, value, tauntEffectNameList.Length);
+    }
 }
 
 // Here we will setup the SQL table to store player preferences.
@@ -1488,11 +1309,32 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 		}
 		case unusualTauntMenu:
 		{	 // Unusual Taunts Main Menu
-			// Loop through unusualTauntMenuItems string array to add correct options.
-			for (int i = 0; i < sizeof(unusualTauntMenuItems); i++)
-			{
-				menu.AddItem(unusualTauntMenuItems[i], unusualTauntMenuItems[i]);
+			char tauntName[512];
+			char tauntEffect[512];
+			
+			for(int i = 0; i < tauntEffectNameList.Length; i++) {
+				tauntEffectNameList.GetString(i, tauntName, sizeof(tauntName));
+				tauntEffectList.GetString(i, tauntEffect, sizeof(tauntEffect));
+
+				// If effect name is Showstopper, get index and add team color to menu.
+				if(StrEqual("Showstopper", tauntName, true)) {
+					if(i == 0)
+						menu.AddItem("utaunt_firework_teamcolor_red", "Showstopper (RED)");
+					else if(i == 1)
+						menu.AddItem("utaunt_firework_teamcolor_blue", "Showstopper (BLU)");
+
+					continue;
+				} else {
+					// LogMessage("tauntEffect: %s, tauntName: %s", tauntEffect, tauntName);
+					menu.AddItem(tauntEffect, tauntName);
+				}
 			}
+
+			// Loop through unusualTauntMenuItems string array to add correct options.
+			// for (int i = 0; i < sizeof(unusualTauntMenuItems); i++)
+			// {
+			// 	menu.AddItem(unusualTauntMenuItems[i], unusualTauntMenuItems[i]);
+			// }
 		}
 		case killStreakTierMenu:
 		{	 // Killstreaks Tier Menu
@@ -1775,8 +1617,9 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 				}
 			}
 
+			char tName[512];
 			// Loop through unusualTauntMenuItems string array
-			for (int i = 0; i < sizeof(unusualTauntMenuItems); i++)
+			for (int i = 0; i < tauntEffectNameList.Length; i++)
 			{
 				// If value picked on menu matches our string value, then set item attribute index to value matching at same index.
 				// Unusual taunt particles are extracted from TF2's packed in items_game.txt file (pak01.vpk), we will be using the string name of particle from the items_game.txt document to add our unusual taunt to the player.
@@ -1786,10 +1629,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 				// This also means for particles which require a refire timer (Showstopper for example) will need magic numbers in order to function properly. These will be defined at the top of the file for readability.
 				// Loop through unusual taunt menu item id list and match display name with item id.
 				// Check if unusualTauntMenu matches selected by player
-				if (StrEqual(info, unusualTauntMenuItems[i]))
+				tauntEffectList.GetString(i, tName, sizeof(tName));
+				if (StrEqual(info, tName))
 				{
 					// Set unusualTauntMenuId to desired effect by matching index of display name with id.
-					player.SetUnusualTauntEffectId(unusualTauntMenuItemIds[i]);
+					player.SetUnusualTauntEffectId(tName);
 					MenuCreate(client, wearablesMenu, "Wearables Menu");
 					UpdateWearables(client, steamid);	 // Update the wearable attributes set by player by writing changes to database.
 					break;
@@ -2088,33 +1932,36 @@ public void ReadItemSchema()
 
 	kv.Rewind();
 	kv.JumpToKey("attribute_controlled_attached_particles");
-	PrintToServer("Jumped to key attribute_controlled_attached_particles");
+	LogMessage("Jumped to key attribute_controlled_attached_particles");
 	kv.GotoFirstSubKey();
 
 	char reFireTime[64];
 	char tauntEffect[256];
+	char tauntEffectID[512];
 	char sectionName[256];
 
 	do
 	{
 		kv.GetSectionName(sectionName, sizeof(sectionName));
-		PrintToServer("%s is the current section", sectionName);
+		LogMessage("%s is the current section", sectionName);
 
 		if (strcmp(sectionName, "taunt_unusual_effects") == 0)
 		{
 			do
 			{
 				kv.GotoFirstSubKey();
+				kv.GetSectionName(tauntEffectID, sizeof(tauntEffectID));
 				kv.GetString("system", tauntEffect, sizeof(tauntEffect));
 
 				if (kv.GetFloat("refire_time") >> 0.0)
 				{
 					kv.GetString("refire_time", reFireTime, sizeof(reFireTime));
 					// TODO: Track which taunts have refire times and make sure to apply them properly in the plugin, also add a blacklist function for broken effects.
-					PrintToServer("%s has refire time of %s seconds.", tauntEffect, reFireTime);
+					LogMessage("%s has refire time of %s seconds.", tauntEffect, reFireTime);
 				}
-				PrintToServer("Found unusual taunt effect %s, adding to list.", tauntEffect);
+				// PrintToServer("Found unusual taunt effect %s ID: %s, adding to list.", tauntEffect, tauntEffectID);
 				tauntEffectList.PushString(tauntEffect);
+				tauntEffectIDList.PushString(tauntEffectID);
 			}
 			while (kv.GotoNextKey());
 		}
