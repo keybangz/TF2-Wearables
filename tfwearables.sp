@@ -204,8 +204,7 @@ public void OnPluginStart()
 
 	// cheers nosoup for the stocksoup collection :)
 	// the file must be opened in binary mode
-    // it's also recommended to set use_valve_fs to ensure it can be read even
-    // if if is mounted from a different directory
+    // it's also recommended to set use_valve_fs to ensure it can be read even if is mounted from a different directory
 	File f = OpenFile("resource/tf_english.txt", "rb", .use_valve_fs = true);
 	tfp.ParseOpenUTF16File(f);
 	delete f;
@@ -221,7 +220,7 @@ void OnTranslationPair(const char[] key, const char[] value) {
 		// unusual hat effects
 		if(strlen(key) == 18 || strlen(key) == 17 || strlen(key) == 16) {
 			unusualEffectNameList.PushString(value);
-			// LogMessage("hatEffect added: key: %s, val: %s, size: %i", key, value, unusualEffectNameList.Length);	
+			// LogMessage("hatEffect added: key: %s, val: %s, size: %i", key, value, unusualEffectNameList.Length);
 		}
 
 		// unusual taunts
@@ -483,7 +482,6 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 		// Goes in order with query, meaning primaryTier = 0, primarySheen = 1, primaryEffect = 2, and so on.
 
 		if(IsValidEntity(primary)) {
-			LogMessage("%d %d %d", results.FetchInt(0), results.FetchInt(1), results.FetchInt(2));
 			// primaryTier
 			if (!SQL_IsFieldNull(results, 0))
 				player.SetKillstreakTierId(results.FetchInt(0), primary);
@@ -559,9 +557,9 @@ void UpdateWearables(int client, char[] steamid)
 	Player player	 = Player(client);	  // Initalize player methodmap
 
 	// Since we are working off of player slots, the player must be alive when we update the database.
-	int	   primary	 = GetPlayerWeaponSlot(client, TFWeaponSlot_Primary);
-	int	   secondary = GetPlayerWeaponSlot(client, TFWeaponSlot_Secondary);
-	int	   melee	 = GetPlayerWeaponSlot(client, TFWeaponSlot_Melee);
+	int	   primary	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("primary"), client);
+	int	   secondary	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("secondary"), client);
+	int	   melee	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("melee"), client);
 
 	char effect[MAXPLAYERS + 1][64];								   // String to store current unusual taunt effect into
 	player.GetUnusualTauntEffectId(effect[client], sizeof(effect));	   // Store unusual taunt effect to buffer to use below.
@@ -710,10 +708,7 @@ Action ProcessWeaponsHandler(Handle timer, int client) {
 	int	   secondary = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("secondary"), client);
 	int	   melee	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("melee"), client);
 
-	ProcessLoadoutSlot(primary, client);
-
 	if(IsValidEntity(primary)) {
-		LogMessage("[DEBUG] Primary found on client %d, Tier: %d Sheen: %d Effect: %d", client, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary));
 		if (player.GetKillstreakTierId(primary) > 0)											   // Only do if player has selected a killstreak tier
 			TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary)));	   // Updates killstreak tier attribute to selected value
 		if (player.GetKillstreakSheenId(primary) > 0)
@@ -723,8 +718,6 @@ Action ProcessWeaponsHandler(Handle timer, int client) {
 		if (player.GetUnusualWeaponEffect(primary) > 0)
 			TF2Attrib_SetByDefIndex(primary, 134, float(player.GetUnusualWeaponEffect(primary)));
 	}
-
-	ProcessLoadoutSlot(secondary, client);
 
 	// Secondary Weapons
 	if(IsValidEntity(secondary)) {
@@ -738,8 +731,6 @@ Action ProcessWeaponsHandler(Handle timer, int client) {
 			TF2Attrib_SetByDefIndex(secondary, 134, float(player.GetUnusualWeaponEffect(secondary)));
 	}
 
-	ProcessLoadoutSlot(melee, client);
-	
 	// Melee Weapons
 	if(IsValidEntity(melee)) {
 		if (player.GetKillstreakTierId(melee) > 0)											   // Only do if player has selected a killstreak tier
@@ -819,7 +810,7 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 			char oldTauntEffect[512];
 
 			int j = 0;
-			
+
 			for(int i = 0; i < tauntEffectNameList.Length; i++) {
 				tauntEffectNameList.GetString(i, tauntName, sizeof(tauntName));
 				tauntEffectList.GetString(i, tauntEffect, sizeof(tauntEffect));
@@ -903,7 +894,7 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 
 			char effectName[512];
 			char effectID[512];
-			
+
 			for(int i = 0; i < unusualEffectIDList.Length; i++) {
 				unusualEffectNameList.GetString(i, effectName, sizeof(effectName));
 				unusualEffectIDList.GetString(i, effectID, sizeof(effectID));
@@ -1309,26 +1300,26 @@ void CreateTempParticle(char[] particle, int entity = -1, float origin[3] = NULL
 // public Action TFParticleHook(const char[] strTEName, const int[] iClients, int iNumClients, float fDelay) {
 
 // 	TE_Start("TFParticleEffect");
-	
+
 // 	static float vecNormal[3]; TE_ReadVector("m_vecNormal", vecNormal);
 // 	static float vecAngles[3]; TE_ReadVector("m_vecAngles", vecAngles);
-	
+
 // 	TE_WriteFloat("m_vecOrigin[0]", TE_ReadFloat("m_vecOrigin[0]"));
 // 	TE_WriteFloat("m_vecOrigin[1]", TE_ReadFloat("m_vecOrigin[1]"));
 // 	TE_WriteFloat("m_vecOrigin[2]", TE_ReadFloat("m_vecOrigin[2]"));
-	
+
 // 	TE_WriteFloat("m_vecStart[0]", TE_ReadFloat("m_vecStart[0]"));
 // 	TE_WriteFloat("m_vecStart[1]", TE_ReadFloat("m_vecStart[1]"));
 // 	TE_WriteFloat("m_vecStart[2]", TE_ReadFloat("m_vecStart[2]"));
 // 	TE_WriteVector("m_vecAngles", vecAngles);
-	
+
 // 	TE_WriteNum("m_iParticleSystemIndex", TE_ReadNum("m_iParticleSystemIndex"));
 // 	TE_WriteNum("entindex", TE_ReadNum("entindex"));
 // 	TE_WriteNum("m_iAttachType", TE_ReadNum("m_iAttachType"));
 // 	TE_WriteNum("m_bResetParticles", TE_ReadNum("m_bResetParticles"));
 
 // 	TE_Send(iClients, iNumClients, fDelay);
-	
+
 // 	return Plugin_Continue;
 // }
 
@@ -1351,43 +1342,6 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemInd
 	return Plugin_Changed;
 }
 
-// public int TF2Items_OnGiveNamedItem_Post(int client, char[] classname, int itemDefIndex, int level, int quality, int entity) {
-// 	if(StrEqual(classname, "tf_wearable"))
-// 		CreateTimer(0.1, ProcessWeaponsHandler, client);
-// }
-
-// public Action TF2Items_OnGetLoadoutItem(int client, int class, int slot, Handle &item) {
-// Player player = Player(client); // Initialize our player method map to save, store and update wearable effects.
-// char buffer[256];
-
-// item = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES);
-
-// TF2Items_GetClassname(item, buffer, sizeof(buffer));
-
-// PrintToServer("buffer: %s", buffer);
-
-// int wep = GetPlayerWeaponSlot(client, slot);
-
-// if(!IsValidEntity(wep))
-//     return Plugin_Continue;
-
-// char buffer[128];
-
-// GetEntityClassname(wep, buffer, sizeof(buffer));
-// int wepIndex = GetEntProp(wep, Prop_Send, "m_iItemDefinitionIndex");
-
-// TF2Items_SetClassname(item, buffer);
-// TF2Items_SetItemIndex(item, wepIndex);
-
-// PrintToServer("wep: %i, effect: %f", wep, float(player.GetUnusualWeaponEffect(wep)));
-
-// TF2Items_SetNumAttributes(item, 2); // Set number of attributes to change
-// TF2Items_SetQuality(item, 5); // Set to unusual quality.
-
-// TF2Items_SetAttribute(item, 1, 134, float(player.GetUnusualWeaponEffect(wep)));
-
-// return Plugin_Changed;
-// }
 public Action ProcessHats(int client, int itemIndex, Handle &hItem)
 {
 	Player player = Player(client);	   // Initialize our player method map to save, store and update wearable effects.
@@ -1404,48 +1358,9 @@ public Action ProcessHats(int client, int itemIndex, Handle &hItem)
 	return Plugin_Changed;
 }
 
-// public Action ProcessWeapons(int client, char[] className, int itemIndex, int item) {
-// 	Player player = Player(client); // Initialize our player method map to save, store and update wearable effects.
-
-// 	if(!TF2Econ_IsValidItemDefinition(itemIndex))
-// 	    return Plugin_Continue;
-
-// 	TF2Items_SetNumAttributes(item, 1); // Set number of attributes to change
-// 	TF2Items_SetQuality(item, 5); // Set to unusual quality.;
-
-// 	int staticSlot = TF2Econ_GetItemDefaultLoadoutSlot(itemIndex);
-
-// 	if(staticSlot == -1)
-// 		return Plugin_Continue;
-		
-// 	int slot = ProcessLoadoutSlot(staticSlot, client);	
-	
-// 	TF2Items_SetAttribute(item, 0, 134, float(player.GetUnusualWeaponEffect(staticSlot)));
-// 	TF2Items_SetAttribute(item, 1, 520, 1.0);
-// 	LogMessage("slot: %i, tier: %f, sheen: %f, effect: %f, unusual: %f", staticSlot, float(player.GetKillstreakTierId(staticSlot)), float(player.GetKillstreakSheenId(staticSlot)), float(player.GetKillstreakEffectId(staticSlot)), float(player.GetUnusualWeaponEffect(staticSlot)));
-// 	TF2Items_SetAttribute(item, 2, 2025, float(player.GetKillstreakTierId(staticSlot)));	   
-// 	TF2Items_SetAttribute(item, 3, 2014, float(player.GetKillstreakSheenId(staticSlot)));
-// 	TF2Items_SetAttribute(item, 4, 2013, float(player.GetKillstreakEffectId(staticSlot)));
-
-// 	return Plugin_Changed;
-// }
-
 public int ProcessLoadoutSlot(int slotIndex, int client) {
-	char buffer[256];
 	int ret = 0;
-
-	TF2Econ_TranslateLoadoutSlotIndexToName(slotIndex, buffer, sizeof(buffer));
-
-	if(StrContains(buffer, "primary"))
-		ret = TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Primary);
-
-	if(StrContains(buffer, "secondary"))
-		ret = TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Secondary);
-
-	if(StrContains(buffer, "melee"))
-		ret = TF2Util_GetPlayerLoadoutEntity(client, TFWeaponSlot_Melee);
-
-	// LogMessage("slot: %s, ret: %i", buffer, ret);
+	ret = TF2Util_GetPlayerLoadoutEntity(client, slotIndex);
 
 	return ret;
 }
