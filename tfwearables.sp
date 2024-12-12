@@ -34,6 +34,7 @@ ArrayList unusualEffectNameList; // Array list to store all unusual effect names
 ArrayList unusualEffectIDList;	  // Array list to store all unusual effect ids for menu creation.
 ArrayList tauntEffectList;	  // Arraylist to store all taunt unusual effects in the game.
 ArrayList tauntEffectNameList; // Arraylist to store taunt unusual effect names for menu creation.
+ArrayList tauntRefireTimerList; // Arraylist to store refire times of unusual taunts.
 
 // temporary variables
 // we are gonna use these to keep track of effect per slot in the menu handler
@@ -191,6 +192,7 @@ public void OnPluginStart()
 	unusualEffectIDList 		= new ArrayList(ByteCountToCells(512));
 	tauntEffectList 	= new ArrayList(ByteCountToCells(512));
 	tauntEffectNameList = new ArrayList(ByteCountToCells(512));
+	tauntRefireTimerList = new ArrayList(ByteCountToCells(512));
 
 	ReadItemSchema();
 
@@ -607,30 +609,46 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 
 	DataPack pack;	  // Create a datapack which we will use for refire timings below.
 
+	char sRefire[512];
+	int iRefireTime = tauntEffectList.FindString(effect[client]);
+	float fRefireTime = 0.0;
+
+	if(iRefireTime != -1) {
+		GetArrayString(tauntRefireTimerList, iRefireTime, sRefire, sizeof(sRefire));
+		fRefireTime = StringToFloat(sRefire);
+		LogMessage("%f reFireTime, %d iRefireTime", fRefireTime, iRefireTime);
+
+		if(fRefireTime >> 0.0) {
+            refireTimer[client] = CreateDataTimer(fRefireTime, HandleRefire, pack, TIMER_REPEAT);
+            pack.WriteCell(client);
+            pack.WriteString(effect[client]);
+		}
+	}
+
 	// Here we will re-attach any particles with an expiry time
 	// I would much rather check the players taunt in the timer handler, however different taunts have different expiry times.
 	// REF: https://wiki.teamfortress.com/wiki/Item_schema
-	if (StrEqual(effect[client], "utaunt_firework_teamcolor_red"))
-	{	 // Showstopper (RED) expires every 2.6 seconds according to latest items_game.txt
-		refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
-		pack.WriteCell(client);
-		pack.WriteString(effect[client]);
-	}
-	else if (StrEqual(effect[client], "utaunt_firework_teamcolor_blue")) {	  // Showstopper (BLU) expires every 2.6 seconds according to latest items_game.txt
-		refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
-		pack.WriteCell(client);
-		pack.WriteString(effect[client]);
-	}
-	else if (StrEqual(effect[client], "utaunt_lightning_parent")) {	   // Mega Strike expires every 0.9 seconds according to latest items_game.txt
-		refireTimer[client] = CreateDataTimer(0.9, HandleRefire, pack, TIMER_REPEAT);
-		pack.WriteCell(client);
-		pack.WriteString(effect[client]);
-	}
-	else if (StrEqual(effect[client], "utaunt_firework_dragon_parent")) {	 // Roaring Rockets expires every 5.25 seconds according to latest items_game.txt
-		refireTimer[client] = CreateDataTimer(5.25, HandleRefire, pack, TIMER_REPEAT);
-		pack.WriteCell(client);
-		pack.WriteString(effect[client]);
-	}
+	// if (StrEqual(effect[client], "utaunt_firework_teamcolor_red"))
+	// {	 // Showstopper (RED) expires every 2.6 seconds according to latest items_game.txt
+	// 	refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
+	// 	pack.WriteCell(client);
+	// 	pack.WriteString(effect[client]);
+	// }
+	// else if (StrEqual(effect[client], "utaunt_firework_teamcolor_blue")) {	  // Showstopper (BLU) expires every 2.6 seconds according to latest items_game.txt
+	// 	refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
+	// 	pack.WriteCell(client);
+	// 	pack.WriteString(effect[client]);
+	// }
+	// else if (StrEqual(effect[client], "utaunt_lightning_parent")) {	   // Mega Strike expires every 0.9 seconds according to latest items_game.txt
+	// 	refireTimer[client] = CreateDataTimer(0.9, HandleRefire, pack, TIMER_REPEAT);
+	// 	pack.WriteCell(client);
+	// 	pack.WriteString(effect[client]);
+	// }
+	// else if (StrEqual(effect[client], "utaunt_firework_dragon_parent")) {	 // Roaring Rockets expires every 5.25 seconds according to latest items_game.txt
+	// 	refireTimer[client] = CreateDataTimer(5.25, HandleRefire, pack, TIMER_REPEAT);
+	// 	pack.WriteCell(client);
+	// 	pack.WriteString(effect[client]);
+	// }
 }
 
 // HandleRefire
@@ -834,24 +852,7 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 				oldTauntName = tauntName;
 				// LogMessage("tauntEffect: %s, tauntName: %s", tauntEffect, tauntName);
 				menu.AddItem(tauntEffect, tauntName);
-
-				// // If effect name is Showstopper, get index and add team color to menu.
-				// if(StrEqual("Showstopper", tauntName, true)) {
-				// 	if(i == 0)
-				// 		menu.AddItem("utaunt_firework_teamcolor_red", "Showstopper (RED)");
-				// 	else if(i == 1)
-				// 		menu.AddItem("utaunt_firework_teamcolor_blue", "Showstopper (BLU)");
-
-				// 	continue;
-				// } else {
-				//}
 			}
-
-			// Loop through unusualTauntMenuItems string array to add correct options.
-			// for (int i = 0; i < sizeof(unusualTauntMenuItems); i++)
-			// {
-			// 	menu.AddItem(unusualTauntMenuItems[i], unusualTauntMenuItems[i]);
-			// }
 		}
 		case killStreakTierMenu:
 		{	 // Killstreaks Tier Menu
@@ -1265,6 +1266,9 @@ stock void DeleteParticle(int particle)
 // The downside to this is in ThirdPerson mode, killstreak effects are also wiped as they are also temporary entities
 // Temporary entities do not have an index or ID, meaning we must clear all at once.
 // REF: https://developer.valvesoftware.com/wiki/Temporary_Entity
+//
+// 08/12/24 - I wonder if a particle system with SetTransmit is a better idea?
+// Especially for lingering taunt particles and weapon unusual effects, they could also probably just break.
 void CreateTempParticle(char[] particle, int entity = -1, float origin[3] = NULL_VECTOR, float angles[3] = { 0.0, 0.0, 0.0 }, bool resetparticles = false)
 {
 	int	 tblidx = FindStringTable("ParticleEffectNames");	 // Grab particle effect string table
@@ -1296,32 +1300,6 @@ void CreateTempParticle(char[] particle, int entity = -1, float origin[3] = NULL
 	TE_WriteNum("m_bResetParticles", resetparticles);	 // This is called to reset all particles attached to that entity, unfortunately there's no other to clear temporary entities.
 	TE_SendToAll();										 // Send temporary entity to all players.
 }
-
-// public Action TFParticleHook(const char[] strTEName, const int[] iClients, int iNumClients, float fDelay) {
-
-// 	TE_Start("TFParticleEffect");
-
-// 	static float vecNormal[3]; TE_ReadVector("m_vecNormal", vecNormal);
-// 	static float vecAngles[3]; TE_ReadVector("m_vecAngles", vecAngles);
-
-// 	TE_WriteFloat("m_vecOrigin[0]", TE_ReadFloat("m_vecOrigin[0]"));
-// 	TE_WriteFloat("m_vecOrigin[1]", TE_ReadFloat("m_vecOrigin[1]"));
-// 	TE_WriteFloat("m_vecOrigin[2]", TE_ReadFloat("m_vecOrigin[2]"));
-
-// 	TE_WriteFloat("m_vecStart[0]", TE_ReadFloat("m_vecStart[0]"));
-// 	TE_WriteFloat("m_vecStart[1]", TE_ReadFloat("m_vecStart[1]"));
-// 	TE_WriteFloat("m_vecStart[2]", TE_ReadFloat("m_vecStart[2]"));
-// 	TE_WriteVector("m_vecAngles", vecAngles);
-
-// 	TE_WriteNum("m_iParticleSystemIndex", TE_ReadNum("m_iParticleSystemIndex"));
-// 	TE_WriteNum("entindex", TE_ReadNum("entindex"));
-// 	TE_WriteNum("m_iAttachType", TE_ReadNum("m_iAttachType"));
-// 	TE_WriteNum("m_bResetParticles", TE_ReadNum("m_bResetParticles"));
-
-// 	TE_Send(iClients, iNumClients, fDelay);
-
-// 	return Plugin_Continue;
-// }
 
 // ClearTempParticles()
 // Dummy function used to easier remove all temporary entities from target entity.
@@ -1433,8 +1411,14 @@ public void ReadItemSchema()
 				{
 					kv.GetString("refire_time", reFireTime, sizeof(reFireTime));
 					// TODO: Track which taunts have refire times and make sure to apply them properly in the plugin, also add a blacklist function for broken effects.
+
+					tauntRefireTimerList.PushString(reFireTime);
 					LogMessage("%s has refire time of %s seconds.", tauntEffect, reFireTime);
+				} else { // Best way to match taunt effects with refire times, 0.0 for ones without and an actual value for ones with, definitely makes sorting easier
+				    tauntRefireTimerList.PushString("0.0");
+					LogMessage("%s has no refire timer.", tauntEffect, reFireTime);
 				}
+
 				tauntEffectList.PushString(tauntEffect);
 			}
 			while (kv.GotoNextKey());
@@ -1475,4 +1459,52 @@ public void ReadItemSchema()
 	while (kv.GotoNextKey());
 
 	delete kv;
+}
+
+// 09 J-Factor CreateParticle function
+// Test SetTransmit on Taunt Effects and Weapon effects (maybe?)
+stock int CreateParticle(int iClient, char[] strParticle, bool bAttach = false, char[] strAttachmentPoint="", float fOffset[3]={0.0, 0.0, 0.0})
+{
+    int iParticle = CreateEntityByName("info_particle_system");
+    if (IsValidEdict(iParticle))
+    {
+        float fPosition[3];
+        float fAngles[3];
+        float fForward[3];
+        float fRight[3];
+        float fUp[3];
+
+        // Retrieve entity's position and angles
+        GetClientAbsOrigin(iClient, fPosition);
+        GetClientAbsAngles(iClient, fAngles);
+
+        // Determine vectors and apply offset
+        GetAngleVectors(fAngles, fForward, fRight, fUp);
+        fPosition[0] += fRight[0]*fOffset[0] + fForward[0]*fOffset[1] + fUp[0]*fOffset[2];
+        fPosition[1] += fRight[1]*fOffset[0] + fForward[1]*fOffset[1] + fUp[1]*fOffset[2];
+        fPosition[2] += fRight[2]*fOffset[0] + fForward[2]*fOffset[1] + fUp[2]*fOffset[2];
+
+        // Teleport and attach to client
+        TeleportEntity(iParticle, fPosition, fAngles, NULL_VECTOR);
+        DispatchKeyValue(iParticle, "effect_name", strParticle);
+
+        if (bAttach == true)
+        {
+            SetVariantString("!activator");
+            AcceptEntityInput(iParticle, "SetParent", iClient, iParticle, 0);
+
+            if (StrEqual(strAttachmentPoint, "") == false)
+            {
+                SetVariantString(strAttachmentPoint);
+                AcceptEntityInput(iParticle, "SetParentAttachmentMaintainOffset", iParticle, iParticle, 0);
+            }
+        }
+
+        // Spawn and start
+        DispatchSpawn(iParticle);
+        ActivateEntity(iParticle);
+        AcceptEntityInput(iParticle, "Start");
+    }
+
+    return iParticle;
 }
