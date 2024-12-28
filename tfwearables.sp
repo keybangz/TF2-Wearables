@@ -12,7 +12,7 @@
 #pragma newdecls required	 // Force Transitional Syntax
 #pragma semicolon 1			 // Force semicolon mode
 
-#define PLUGIN_VERSION	"1.3.1"
+#define PLUGIN_VERSION	"1.3.2"
 
 // REF: https://developer.valvesoftware.com/wiki/Entity_limit
 #define MAX_ENTITY_SIZE 4096
@@ -29,12 +29,12 @@ Handle	  refireTimer[MAXPLAYERS + 1];				 // Handle to track unusual taunts with
 int		  unusualHatEffect[MAXPLAYERS + 1];
 int		  unusualWeaponEffect[MAXPLAYERS + 1][MAX_ENTITY_SIZE];
 
-ArrayList hatIDList;		  // ArrayList to store all hat ids we can apply unusual effects too in-game
-ArrayList unusualEffectNameList; // Array list to store all unusual effect names for menu creation.
-ArrayList unusualEffectIDList;	  // Array list to store all unusual effect ids for menu creation.
-ArrayList tauntEffectList;	  // Arraylist to store all taunt unusual effects in the game.
-ArrayList tauntEffectNameList; // Arraylist to store taunt unusual effect names for menu creation.
-ArrayList tauntRefireTimerList; // Arraylist to store refire times of unusual taunts.
+ArrayList hatIDList;				// ArrayList to store all hat ids we can apply unusual effects too in-game
+ArrayList unusualEffectNameList;	// Array list to store all unusual effect names for menu creation.
+ArrayList unusualEffectIDList;		// Array list to store all unusual effect ids for menu creation.
+ArrayList tauntEffectList;			// Arraylist to store all taunt unusual effects in the game.
+ArrayList tauntEffectNameList;		// Arraylist to store taunt unusual effect names for menu creation.
+ArrayList tauntRefireTimerList;		// Arraylist to store refire times of unusual taunts.
 
 // temporary variables
 // we are gonna use these to keep track of effect per slot in the menu handler
@@ -187,12 +187,12 @@ public void OnPluginStart()
 	RegAdminCmd("sm_wearables", WearablesCommand, ADMFLAG_RESERVATION, "Shows the wearables menu.");	// Translates to /wearables in-game
 
 	// Initialize new ArrayList to store all hat id's inside game, used in ReadItemSchema()
-	hatIDList			= new ArrayList(ByteCountToCells(512));
-	unusualEffectNameList 		= new ArrayList(ByteCountToCells(512));
-	unusualEffectIDList 		= new ArrayList(ByteCountToCells(512));
-	tauntEffectList 	= new ArrayList(ByteCountToCells(512));
-	tauntEffectNameList = new ArrayList(ByteCountToCells(512));
-	tauntRefireTimerList = new ArrayList(ByteCountToCells(512));
+	hatIDList			  = new ArrayList(ByteCountToCells(512));
+	unusualEffectNameList = new ArrayList(ByteCountToCells(512));
+	unusualEffectIDList	  = new ArrayList(ByteCountToCells(512));
+	tauntEffectList		  = new ArrayList(ByteCountToCells(512));
+	tauntEffectNameList	  = new ArrayList(ByteCountToCells(512));
+	tauntRefireTimerList  = new ArrayList(ByteCountToCells(512));
 
 	ReadItemSchema();
 
@@ -206,8 +206,8 @@ public void OnPluginStart()
 
 	// cheers nosoup for the stocksoup collection :)
 	// the file must be opened in binary mode
-    // it's also recommended to set use_valve_fs to ensure it can be read even if is mounted from a different directory
-	File f = OpenFile("resource/tf_english.txt", "rb", .use_valve_fs = true);
+	// it's also recommended to set use_valve_fs to ensure it can be read even if is mounted from a different directory
+	File f		   = OpenFile("resource/tf_english.txt", "rb", .use_valve_fs = true);
 	tfp.ParseOpenUTF16File(f);
 	delete f;
 
@@ -215,18 +215,21 @@ public void OnPluginStart()
 	Database.Connect(DatabaseHandler, dbname);	  // Pass string buffer to connect method.
 }
 
-void OnTranslationPair(const char[] key, const char[] value) {
+void OnTranslationPair(const char[] key, const char[] value)
+{
 	// Loop through taunt effect ID list and match them with the key.
-	if(StrContains(key, "Attrib_Particle", true) != -1) {
-
+	if (StrContains(key, "Attrib_Particle", true) != -1)
+	{
 		// unusual hat effects
-		if(strlen(key) == 18 || strlen(key) == 17 || strlen(key) == 16) {
+		if (strlen(key) == 18 || strlen(key) == 17 || strlen(key) == 16)
+		{
 			unusualEffectNameList.PushString(value);
 			// LogMessage("hatEffect added: key: %s, val: %s, size: %i", key, value, unusualEffectNameList.Length);
 		}
 
 		// unusual taunts
-		if (strlen(key) == 19) {
+		if (strlen(key) == 19)
+		{
 			tauntEffectNameList.PushString(value);
 			// LogMessage("tauntEffect added: key: %s, val: %s, size: %i", key, value, tauntEffectNameList.Length);
 		}
@@ -472,10 +475,10 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 		return;
 
 	int	   primary	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("primary"), client);
-	int	   secondary	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("secondary"), client);
+	int	   secondary = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("secondary"), client);
 	int	   melee	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("melee"), client);
 
-	Player player = Player(client);
+	Player player	 = Player(client);
 
 	// Grab row of data provided by SQL query.
 	while (results.FetchRow())
@@ -483,7 +486,8 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 		// Here we've got to check each individual field and check if it's null before attempting to grab or update data.
 		// Goes in order with query, meaning primaryTier = 0, primarySheen = 1, primaryEffect = 2, and so on.
 
-		if(IsValidEntity(primary)) {
+		if (IsValidEntity(primary))
+		{
 			// primaryTier
 			if (!SQL_IsFieldNull(results, 0))
 				player.SetKillstreakTierId(results.FetchInt(0), primary);
@@ -501,7 +505,8 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 				player.SetUnusualWeaponEffectId(results.FetchInt(11), primary);
 		}
 
-		if(IsValidEntity(secondary)) {
+		if (IsValidEntity(secondary))
+		{
 			// secondaryTier
 			if (!SQL_IsFieldNull(results, 3))
 				player.SetKillstreakTierId(results.FetchInt(3), secondary);
@@ -519,7 +524,8 @@ void FetchWearablesHandler(Database db, DBResultSet results, const char[] error,
 				player.SetUnusualWeaponEffectId(results.FetchInt(12), secondary);
 		}
 
-		if(IsValidEntity(melee)) {
+		if (IsValidEntity(melee))
+		{
 			// meleeTier
 			if (!SQL_IsFieldNull(results, 6))
 				player.SetKillstreakTierId(results.FetchInt(6), melee);
@@ -560,25 +566,28 @@ void UpdateWearables(int client, char[] steamid)
 
 	// Since we are working off of player slots, the player must be alive when we update the database.
 	int	   primary	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("primary"), client);
-	int	   secondary	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("secondary"), client);
+	int	   secondary = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("secondary"), client);
 	int	   melee	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("melee"), client);
 
-	char effect[MAXPLAYERS + 1][64];								   // String to store current unusual taunt effect into
+	char   effect[MAXPLAYERS + 1][64];								   // String to store current unusual taunt effect into
 	player.GetUnusualTauntEffectId(effect[client], sizeof(effect));	   // Store unusual taunt effect to buffer to use below.
 
 	cTableName.GetString(buffer, sizeof(buffer));
 
-	if(IsValidEntity(primary)) {
+	if (IsValidEntity(primary))
+	{
 		FormatEx(query, sizeof(query), "UPDATE %s SET primaryTier='%i', primarySheen='%i', primaryEffect='%i', unusualPrimary='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(primary), player.GetKillstreakSheenId(primary), player.GetKillstreakEffectId(primary), player.GetUnusualWeaponEffect(primary), steamid);
 		WearablesDB.Query(SQLError, query);
 	}
 
-	if(IsValidEntity(secondary)) {
+	if (IsValidEntity(secondary))
+	{
 		FormatEx(query, sizeof(query), "UPDATE %s SET secondaryTier='%i', secondarySheen='%i', secondaryEffect='%i', unusualSecondary='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(secondary), player.GetKillstreakSheenId(secondary), player.GetKillstreakEffectId(secondary), player.GetUnusualWeaponEffect(secondary), steamid);
 		WearablesDB.Query(SQLError, query);
 	}
 
-	if(IsValidEntity(melee)) {
+	if (IsValidEntity(melee))
+	{
 		FormatEx(query, sizeof(query), "UPDATE %s SET meleeTier='%i', meleeSheen='%i', meleeEffect='%i', unusualMelee='%i' WHERE steamid='%s'", buffer, player.GetKillstreakTierId(melee), player.GetKillstreakSheenId(melee), player.GetKillstreakEffectId(melee), player.GetUnusualWeaponEffect(melee), steamid);
 		WearablesDB.Query(SQLError, query);
 	}
@@ -609,19 +618,21 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 
 	DataPack pack;	  // Create a datapack which we will use for refire timings below.
 
-	char sRefire[512];
-	int iRefireTime = tauntEffectList.FindString(effect[client]);
-	float fRefireTime = 0.0;
+	char	 sRefire[512];
+	int		 iRefireTime = tauntEffectList.FindString(effect[client]);
+	float	 fRefireTime = 0.0;
 
-	if(iRefireTime != -1) {
+	if (iRefireTime != -1)
+	{
 		GetArrayString(tauntRefireTimerList, iRefireTime, sRefire, sizeof(sRefire));
 		fRefireTime = StringToFloat(sRefire);
 		LogMessage("%f reFireTime, %d iRefireTime", fRefireTime, iRefireTime);
 
-		if(fRefireTime >> 0.0) {
-            refireTimer[client] = CreateDataTimer(fRefireTime, HandleRefire, pack, TIMER_REPEAT);
-            pack.WriteCell(client);
-            pack.WriteString(effect[client]);
+		if (fRefireTime >> 0.0)
+		{
+			refireTimer[client] = CreateDataTimer(fRefireTime, HandleRefire, pack, TIMER_REPEAT);
+			pack.WriteCell(client);
+			pack.WriteString(effect[client]);
 		}
 	}
 
@@ -718,7 +729,8 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 	return Plugin_Handled;
 }
 
-Action ProcessWeaponsHandler(Handle timer, int client) {
+Action ProcessWeaponsHandler(Handle timer, int client)
+{
 	Player player	 = Player(client);
 
 	// These will be valid entities on resupply due to player has be alive for resupply to take place.
@@ -726,7 +738,8 @@ Action ProcessWeaponsHandler(Handle timer, int client) {
 	int	   secondary = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("secondary"), client);
 	int	   melee	 = ProcessLoadoutSlot(TF2Econ_TranslateLoadoutSlotNameToIndex("melee"), client);
 
-	if(IsValidEntity(primary)) {
+	if (IsValidEntity(primary))
+	{
 		if (player.GetKillstreakTierId(primary) > 0)											   // Only do if player has selected a killstreak tier
 			TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(primary)));	   // Updates killstreak tier attribute to selected value
 		if (player.GetKillstreakSheenId(primary) > 0)
@@ -738,7 +751,8 @@ Action ProcessWeaponsHandler(Handle timer, int client) {
 	}
 
 	// Secondary Weapons
-	if(IsValidEntity(secondary)) {
+	if (IsValidEntity(secondary))
+	{
 		if (player.GetKillstreakTierId(secondary) > 0)												   // Only do if player has selected a killstreak tier
 			TF2Attrib_SetByDefIndex(secondary, 2025, float(player.GetKillstreakTierId(secondary)));	   // Updates killstreak tier attribute to selected value
 		if (player.GetKillstreakSheenId(secondary) > 0)
@@ -750,7 +764,8 @@ Action ProcessWeaponsHandler(Handle timer, int client) {
 	}
 
 	// Melee Weapons
-	if(IsValidEntity(melee)) {
+	if (IsValidEntity(melee))
+	{
 		if (player.GetKillstreakTierId(melee) > 0)											   // Only do if player has selected a killstreak tier
 			TF2Attrib_SetByDefIndex(melee, 2025, float(player.GetKillstreakTierId(melee)));	   // Updates killstreak tier attribute to selected value
 		if (player.GetKillstreakSheenId(melee) > 0)
@@ -827,15 +842,17 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 			char oldTauntName[512];
 			char oldTauntEffect[512];
 
-			int j = 0;
+			int	 j = 0;
 
-			for(int i = 0; i < tauntEffectNameList.Length; i++) {
+			for (int i = 0; i < tauntEffectNameList.Length; i++)
+			{
 				tauntEffectNameList.GetString(i, tauntName, sizeof(tauntName));
 				tauntEffectList.GetString(i, tauntEffect, sizeof(tauntEffect));
 
 				j = i - 1;
 
-				if(StrEqual(oldTauntName, tauntName, true)) {
+				if (StrEqual(oldTauntName, tauntName, true))
+				{
 					tauntEffectNameList.GetString(j, oldTauntName, sizeof(oldTauntName));
 					tauntEffectList.GetString(j, oldTauntEffect, sizeof(oldTauntEffect));
 					Format(oldTauntName, sizeof(oldTauntName), "%s (RED)", oldTauntName);
@@ -896,16 +913,17 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 			char effectName[512];
 			char effectID[512];
 
-			for(int i = 0; i < unusualEffectIDList.Length; i++) {
-				unusualEffectNameList.GetString(i, effectName, sizeof(effectName));
+			for (int i = 0; i < unusualEffectIDList.Length; i++)
+			{
+				unusualEffectNameList.GetString(i+1, effectName, sizeof(effectName));
 				unusualEffectIDList.GetString(i, effectID, sizeof(effectID));
 
-				LogMessage("effectName: %s, effectID: %s", effectName, effectID);
+				// LogMessage("effectName: %s, effectID: %s", effectName, effectID);
 
 				menu.AddItem(effectID, effectName);
 			}
 
-			 // Loop through unusualHatMenuItems string array to add correct options.
+			// Loop through unusualHatMenuItems string array to add correct options.
 			// for (int i = 0; i < sizeof(unusualMenuItems); i++)
 			// {
 			// 	menu.AddItem(unusualMenuItems[i], unusualMenuItems[i]);
@@ -1161,7 +1179,8 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 				// Loop through unusual taunt menu item id list and match display name with item id.
 				// Check if unusualTauntMenu matches selected by player
 				tauntEffectList.GetString(i, tName, sizeof(tName));
-				if (StrEqual(info, tName)) {
+				if (StrEqual(info, tName))
+				{
 					// Set unusualTauntMenuId to desired effect by matching index of display name with id.
 					player.SetUnusualTauntEffectId(tName);
 					MenuCreate(client, wearablesMenu, "Wearables Menu");
@@ -1171,7 +1190,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 			}
 
 			// Loop through unusualMenuItems string array
-			for (int i = 0; i < unusualEffectIDList.Length; i++)
+			for (int i = 0; i+1 < unusualEffectIDList.Length; i++)
 			{
 				// If value picked on the menu matches our string value, then set item attribute index to value matching at same index.
 				unusualEffectIDList.GetString(i, tName, sizeof(tName));
@@ -1314,7 +1333,7 @@ public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemInd
 {
 	hItem = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES);	   // Assign our item to be changing, we want to be keeping the old attributes of the players item but also overriding any we wish.
 
-	if(StrEqual(className, "tf_wearable"))
+	if (StrEqual(className, "tf_wearable"))
 		ProcessHats(client, itemIndex, hItem);
 
 	return Plugin_Changed;
@@ -1336,9 +1355,10 @@ public Action ProcessHats(int client, int itemIndex, Handle &hItem)
 	return Plugin_Changed;
 }
 
-public int ProcessLoadoutSlot(int slotIndex, int client) {
+public int ProcessLoadoutSlot(int slotIndex, int client)
+{
 	int ret = 0;
-	ret = TF2Util_GetPlayerLoadoutEntity(client, slotIndex);
+	ret		= TF2Util_GetPlayerLoadoutEntity(client, slotIndex);
 
 	return ret;
 }
@@ -1414,8 +1434,9 @@ public void ReadItemSchema()
 
 					tauntRefireTimerList.PushString(reFireTime);
 					LogMessage("%s has refire time of %s seconds.", tauntEffect, reFireTime);
-				} else { // Best way to match taunt effects with refire times, 0.0 for ones without and an actual value for ones with, definitely makes sorting easier
-				    tauntRefireTimerList.PushString("0.0");
+				}
+				else {	  // Best way to match taunt effects with refire times, 0.0 for ones without and an actual value for ones with, definitely makes sorting easier
+					tauntRefireTimerList.PushString("0.0");
 					LogMessage("%s has no refire timer.", tauntEffect, reFireTime);
 				}
 
@@ -1426,7 +1447,8 @@ public void ReadItemSchema()
 			kv.GoBack();
 		}
 
-		if (strcmp(sectionName, "other_particles") == 0) {
+		if (strcmp(sectionName, "other_particles") == 0)
+		{
 			do
 			{
 				kv.GotoFirstSubKey();
@@ -1441,7 +1463,8 @@ public void ReadItemSchema()
 			kv.GoBack();
 		}
 
-		if (strcmp(sectionName, "cosmetic_unusual_effects") == 0) {
+		if (strcmp(sectionName, "cosmetic_unusual_effects") == 0)
+		{
 			do
 			{
 				kv.GotoFirstSubKey();
@@ -1463,48 +1486,48 @@ public void ReadItemSchema()
 
 // 09 J-Factor CreateParticle function
 // Test SetTransmit on Taunt Effects and Weapon effects (maybe?)
-stock int CreateParticle(int iClient, char[] strParticle, bool bAttach = false, char[] strAttachmentPoint="", float fOffset[3]={0.0, 0.0, 0.0})
+stock int CreateParticle(int iClient, char[] strParticle, bool bAttach = false, char[] strAttachmentPoint = "", float fOffset[3] = { 0.0, 0.0, 0.0 })
 {
-    int iParticle = CreateEntityByName("info_particle_system");
-    if (IsValidEdict(iParticle))
-    {
-        float fPosition[3];
-        float fAngles[3];
-        float fForward[3];
-        float fRight[3];
-        float fUp[3];
+	int iParticle = CreateEntityByName("info_particle_system");
+	if (IsValidEdict(iParticle))
+	{
+		float fPosition[3];
+		float fAngles[3];
+		float fForward[3];
+		float fRight[3];
+		float fUp[3];
 
-        // Retrieve entity's position and angles
-        GetClientAbsOrigin(iClient, fPosition);
-        GetClientAbsAngles(iClient, fAngles);
+		// Retrieve entity's position and angles
+		GetClientAbsOrigin(iClient, fPosition);
+		GetClientAbsAngles(iClient, fAngles);
 
-        // Determine vectors and apply offset
-        GetAngleVectors(fAngles, fForward, fRight, fUp);
-        fPosition[0] += fRight[0]*fOffset[0] + fForward[0]*fOffset[1] + fUp[0]*fOffset[2];
-        fPosition[1] += fRight[1]*fOffset[0] + fForward[1]*fOffset[1] + fUp[1]*fOffset[2];
-        fPosition[2] += fRight[2]*fOffset[0] + fForward[2]*fOffset[1] + fUp[2]*fOffset[2];
+		// Determine vectors and apply offset
+		GetAngleVectors(fAngles, fForward, fRight, fUp);
+		fPosition[0] += fRight[0] * fOffset[0] + fForward[0] * fOffset[1] + fUp[0] * fOffset[2];
+		fPosition[1] += fRight[1] * fOffset[0] + fForward[1] * fOffset[1] + fUp[1] * fOffset[2];
+		fPosition[2] += fRight[2] * fOffset[0] + fForward[2] * fOffset[1] + fUp[2] * fOffset[2];
 
-        // Teleport and attach to client
-        TeleportEntity(iParticle, fPosition, fAngles, NULL_VECTOR);
-        DispatchKeyValue(iParticle, "effect_name", strParticle);
+		// Teleport and attach to client
+		TeleportEntity(iParticle, fPosition, fAngles, NULL_VECTOR);
+		DispatchKeyValue(iParticle, "effect_name", strParticle);
 
-        if (bAttach == true)
-        {
-            SetVariantString("!activator");
-            AcceptEntityInput(iParticle, "SetParent", iClient, iParticle, 0);
+		if (bAttach == true)
+		{
+			SetVariantString("!activator");
+			AcceptEntityInput(iParticle, "SetParent", iClient, iParticle, 0);
 
-            if (StrEqual(strAttachmentPoint, "") == false)
-            {
-                SetVariantString(strAttachmentPoint);
-                AcceptEntityInput(iParticle, "SetParentAttachmentMaintainOffset", iParticle, iParticle, 0);
-            }
-        }
+			if (StrEqual(strAttachmentPoint, "") == false)
+			{
+				SetVariantString(strAttachmentPoint);
+				AcceptEntityInput(iParticle, "SetParentAttachmentMaintainOffset", iParticle, iParticle, 0);
+			}
+		}
 
-        // Spawn and start
-        DispatchSpawn(iParticle);
-        ActivateEntity(iParticle);
-        AcceptEntityInput(iParticle, "Start");
-    }
+		// Spawn and start
+		DispatchSpawn(iParticle);
+		ActivateEntity(iParticle);
+		AcceptEntityInput(iParticle, "Start");
+	}
 
-    return iParticle;
+	return iParticle;
 }
