@@ -33,6 +33,9 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 - MoreColors (For compiling) - https://forums.alliedmods.net/showthread.php?t=185016
 - TF2Items - https://forums.alliedmods.net/showthread.php?s=9d06c121e0d39d2dd87bf0ef107c763d&t=115100
 - TF2Attributes - https://github.com/FlaminSarge/tf2attributes
+- TF2Utils - https://github.com/nosoop/SM-TFUtils
+- TF Econ Data - https://github.com/nosoop/SM-TFEconData
+- stocksoup/textparse - https://github.com/nosoop/stocksoup
 
 ## Installation
 
