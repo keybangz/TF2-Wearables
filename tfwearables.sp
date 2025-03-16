@@ -629,7 +629,7 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	{
 		GetArrayString(tauntRefireTimerList, iRefireTime, sRefire, sizeof(sRefire));
 		fRefireTime = StringToFloat(sRefire);
-		LogMessage("%f reFireTime, %d iRefireTime", fRefireTime, iRefireTime);
+		// LogMessage("%f reFireTime, %d iRefireTime", fRefireTime, iRefireTime);
 
 		if (fRefireTime >> 0.0)
 		{
@@ -638,31 +638,6 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 			pack.WriteString(effect[client]);
 		}
 	}
-
-	// Here we will re-attach any particles with an expiry time
-	// I would much rather check the players taunt in the timer handler, however different taunts have different expiry times.
-	// REF: https://wiki.teamfortress.com/wiki/Item_schema
-	// if (StrEqual(effect[client], "utaunt_firework_teamcolor_red"))
-	// {	 // Showstopper (RED) expires every 2.6 seconds according to latest items_game.txt
-	// 	refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
-	// 	pack.WriteCell(client);
-	// 	pack.WriteString(effect[client]);
-	// }
-	// else if (StrEqual(effect[client], "utaunt_firework_teamcolor_blue")) {	  // Showstopper (BLU) expires every 2.6 seconds according to latest items_game.txt
-	// 	refireTimer[client] = CreateDataTimer(2.6, HandleRefire, pack, TIMER_REPEAT);
-	// 	pack.WriteCell(client);
-	// 	pack.WriteString(effect[client]);
-	// }
-	// else if (StrEqual(effect[client], "utaunt_lightning_parent")) {	   // Mega Strike expires every 0.9 seconds according to latest items_game.txt
-	// 	refireTimer[client] = CreateDataTimer(0.9, HandleRefire, pack, TIMER_REPEAT);
-	// 	pack.WriteCell(client);
-	// 	pack.WriteString(effect[client]);
-	// }
-	// else if (StrEqual(effect[client], "utaunt_firework_dragon_parent")) {	 // Roaring Rockets expires every 5.25 seconds according to latest items_game.txt
-	// 	refireTimer[client] = CreateDataTimer(5.25, HandleRefire, pack, TIMER_REPEAT);
-	// 	pack.WriteCell(client);
-	// 	pack.WriteString(effect[client]);
-	// }
 }
 
 // HandleRefire
@@ -725,8 +700,6 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 	// REF: https://wiki.teamfortress.com/wiki/List_of_item_attributes
 
 	// OnResupply, ensure to override default item attributes again with desired attributes.
-	// Primary Weapons
-
 	CreateTimer(0.1, ProcessWeaponsHandler, client);	// Process weapons after a slight delay to ensure player has spawned.
 
 	return Plugin_Handled;
@@ -1199,7 +1172,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 				unusualEffectIDList.GetString(i, tName, sizeof(tName));
 				if (StrEqual(info, tName))
 				{
-					LogMessage("tName: %s", tName);
+					// LogMessage("tName: %s", tName);
 					player.SetUnusualHatEffectId(StringToInt(tName));
 					MenuCreate(client, wearablesMenu, "Wearables Menu");
 					UpdateWearables(client, steamid);	 // Update the wearable attributes set by player by writing changes to database.
@@ -1408,7 +1381,7 @@ public void ReadItemSchema()
 
 	kv.Rewind();
 	kv.JumpToKey("attribute_controlled_attached_particles");
-	LogMessage("Jumped to key attribute_controlled_attached_particles");
+	// LogMessage("Jumped to key attribute_controlled_attached_particles");
 	kv.GotoFirstSubKey();
 
 	char reFireTime[64];
@@ -1420,7 +1393,7 @@ public void ReadItemSchema()
 	do
 	{
 		kv.GetSectionName(sectionName, sizeof(sectionName));
-		LogMessage("%s is the current section", sectionName);
+		// LogMessage("%s is the current section", sectionName);
 
 		if (strcmp(sectionName, "taunt_unusual_effects") == 0)
 		{
@@ -1436,11 +1409,11 @@ public void ReadItemSchema()
 					// TODO: Track which taunts have refire times and make sure to apply them properly in the plugin, also add a blacklist function for broken effects.
 
 					tauntRefireTimerList.PushString(reFireTime);
-					LogMessage("%s has refire time of %s seconds.", tauntEffect, reFireTime);
+					// LogMessage("%s has refire time of %s seconds.", tauntEffect, reFireTime);
 				}
 				else {	  // Best way to match taunt effects with refire times, 0.0 for ones without and an actual value for ones with, definitely makes sorting easier
 					tauntRefireTimerList.PushString("0.0");
-					LogMessage("%s has no refire timer.", tauntEffect, reFireTime);
+					// LogMessage("%s has no refire timer.", tauntEffect, reFireTime);
 				}
 
 				tauntEffectList.PushString(tauntEffect);
@@ -1457,7 +1430,7 @@ public void ReadItemSchema()
 				kv.GotoFirstSubKey();
 				kv.GetSectionName(hatEffectID, sizeof(hatEffectID));
 
-				LogMessage("hatEffectID: %s", hatEffectID);
+				// LogMessage("hatEffectID: %s", hatEffectID);
 
 				unusualEffectIDList.PushString(hatEffectID);
 			}
@@ -1473,7 +1446,7 @@ public void ReadItemSchema()
 				kv.GotoFirstSubKey();
 				kv.GetSectionName(hatEffectID, sizeof(hatEffectID));
 
-				LogMessage("hatEffectID: %s", hatEffectID);
+				// LogMessage("hatEffectID: %s", hatEffectID);
 
 				unusualEffectIDList.PushString(hatEffectID);
 			}
