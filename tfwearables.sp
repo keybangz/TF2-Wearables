@@ -613,6 +613,9 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 	char   effect[MAXPLAYERS + 1][64];								   // String to store current unusual taunt effect into
 	player.GetUnusualTauntEffectId(effect[client], sizeof(effect));	   // Grab player current unusual effect and store into destination buffer
 
+	if(!strlen(effect[client]))
+		return;
+
 	// AttachParticle(client, effect[client]); // Create and attach desired particle effect to player.
 	CreateTempParticle(effect[client], client);
 
