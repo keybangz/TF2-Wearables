@@ -203,7 +203,7 @@ public void OnPluginStart()
 
     // In-game events the plugin should listen to.
     // If other plugins are manually invoking these events, THESE EVENTS WILL FIRE. (Bad practice to manually invoke events anyways)
-    HookEvent("post_inventory_application", OnResupply);    // When player touches resupply locker, respawns or manually invokes a refresh of player items.
+    // HookEvent("post_inventory_application", OnResupply);    // When player touches resupply locker, respawns or manually invokes a refresh of player items.
 
     // Admin Commands
     RegAdminCmd("sm_wearables", WearablesCommand, ADMFLAG_RESERVATION, "Shows the wearables menu.");    // Translates to /wearables in-game
@@ -416,6 +416,37 @@ public void OnClientPutInServer(int client)
         return;
 
     FetchWearables(client, steamid);
+}
+
+public void OnMapEnd() {
+	if(!cEnabled.BoolValue)
+		return;
+
+	char steamid[32];
+
+	for(int i = 1; i <= MaxClients; i++) {
+		if(!IsClientInGame(i) || IsFakeClient(i))
+			continue;
+
+		if (!GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
+       		continue;
+
+		UpdateWearables(i, steamid);
+	}
+}
+
+public void OnClientDisconnect(int client) {
+	if(!cEnabled.BoolValue)
+		return;
+
+	if(IsFakeClient(client))
+		return;
+
+	char steamid[32];                                                         // Buffer to store SteamID32
+    if (!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
+        return;
+
+	UpdateWearables(client, steamid);
 }
 
 // FetchWearables - Used to fetch all data that might be already stored for the player inside the database.
@@ -659,25 +690,25 @@ public void RequestDelete(DataPack pack)
 }
 
 // Hooked Events
-public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
-{
-    if (!cEnabled.BoolValue)    // If plugin is not enabled, do nothing.
-        return Plugin_Handled;
+// public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
+// {
+//     if (!cEnabled.BoolValue)    // If plugin is not enabled, do nothing.
+//         return Plugin_Handled;
 
-    int client = GetClientOfUserId(GetEventInt(event, "userid"));
+//     int client = GetClientOfUserId(GetEventInt(event, "userid"));
 
-    if (!IsClientInGame(client))
-        return Plugin_Handled;
+//     if (!IsClientInGame(client))
+//         return Plugin_Handled;
 
-    // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
-    char steamid[32];                                                         // Buffer to store SteamID32
-    if (!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
-        return Plugin_Continue;
+//     // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
+//     char steamid[32];                                                         // Buffer to store SteamID32
+//     if (!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
+//         return Plugin_Continue;
 
-    FetchWearables(client, steamid);    // Fetch the wearable set from the database.
+//     FetchWearables(client, steamid);    // Fetch the wearable set from the database.
 
-    return Plugin_Handled;
-}
+//     return Plugin_Handled;
+// }
 
 // Command Handlers
 public Action WearablesCommand(int client, int args)
@@ -917,7 +948,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
 
 					// TODO: Translations
-					// CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}primary.", killStreakTierMenuItems[tTier[client]+1]);
+					// CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", killStreakTierMenuItems[tTier[client]+1], info);
 
 					tTier[client] = 0;
                 }
@@ -928,7 +959,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
 
 					// TODO: Translations
-					// CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}primary.", killStreakSheenMenuItems[tSheen[client]]);
+					// CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", killStreakSheenMenuItems[tSheen[client]], info);
 
 					tSheen[client] = 0;
                 }
@@ -939,7 +970,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
 
 					// TODO: Translations
-					// CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}primary.", killStreakEffectMenuItems[tEffect[client]]);
+					// CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", killStreakEffectMenuItems[tEffect[client]], info);
 
 					tEffect[client] = 0;
                 }
@@ -950,14 +981,13 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
 
 					// TODO: Translations
-					// CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}primary.", unusualWeaponMenuItems[tWeaponEffect[client]]);
+					// CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", unusualWeaponMenuItems[tWeaponEffect[client]], info);
 
 					tWeaponEffect[client] = 0;
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
-                UpdateWearables(client, steamid);    // Update the wearable attributes set by player by writing changes to database.
             }
 
             // If player chose second weapon slot
@@ -999,7 +1029,6 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
-                UpdateWearables(client, steamid);    // Update the wearable attributes set by player by writing changes to database.
             }
 
             // If player chose melee weapon slot
@@ -1041,7 +1070,6 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 
                 // Display the main wearables menu after player has selected killstreak option.
                 MenuCreate(client, wearablesMenu, "Wearables Menu");
-                UpdateWearables(client, steamid);    // Update the wearable attributes set by player by writing changes to database.
             }
 
             // Killstreak Tiers, Sheens, Effects Handlers (We give players the effects selected here!)
@@ -1109,7 +1137,6 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 					CPrintToChat(client, "You have chosen unusual taunt effect: {red}%s", tName);
 					
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
-                    UpdateWearables(client, steamid);    // Update the wearable attributes set by player by writing changes to database.
                     break;
                 }
             }
@@ -1129,7 +1156,6 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 					CPrintToChat(client, "You have chosen unusual hat effect: {red}%s", tName);
 
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
-                    UpdateWearables(client, steamid);    // Update the wearable attributes set by player by writing changes to database.
                     break;
                 }
             }
