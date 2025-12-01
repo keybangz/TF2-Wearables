@@ -1174,9 +1174,6 @@ public void DeleteParticle(int particle)
 // The downside to this is in ThirdPerson mode, killstreak effects are also wiped as they are also temporary entities
 // Temporary entities do not have an index or ID, meaning we must clear all at once.
 // REF: https://developer.valvesoftware.com/wiki/Temporary_Entity
-//
-// 08/12/24 - I wonder if a particle system with SetTransmit is a better idea?
-// Especially for lingering taunt particles and weapon unusual effects, they could also probably just break.
 void CreateTempParticle(char[] particle, int entity = -1, float origin[3] = NULL_VECTOR, float angles[3] = { 0.0, 0.0, 0.0 }, bool resetparticles = false)
 {
     int  tblidx = FindStringTable("ParticleEffectNames");    // Grab particle effect string table
@@ -1285,8 +1282,6 @@ public Action ProcessWeapons(int client, int itemIndex, Handle &hItem)
             TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot1)));
 			attributes++;
 		}
-
-		TF2Items_SetNumAttributes(hItem, attributes);
 	}
 
 	if(loadoutSlot == slot2) {
@@ -1316,8 +1311,6 @@ public Action ProcessWeapons(int client, int itemIndex, Handle &hItem)
             TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot2)));
 			attributes++;
 		}
-
-		TF2Items_SetNumAttributes(hItem, attributes);
 	}
 
 	if(loadoutSlot == slot3) {
@@ -1347,9 +1340,9 @@ public Action ProcessWeapons(int client, int itemIndex, Handle &hItem)
             TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot3)));
 			attributes++;
 		}
-
-		TF2Items_SetNumAttributes(hItem, attributes);
 	}
+
+	TF2Items_SetNumAttributes(hItem, attributes);
 
     return Plugin_Changed;
 }
