@@ -582,9 +582,6 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
     // AttachParticle(client, effect[client]); // Create and attach desired particle effect to player.
     proxyEntity[client] = CreateTauntEntity(client, effect[client]);
 
-    if (IsValidEntity(proxyEntity[client]))
-        LogMessage("effect %s sent to tauntEntity %d for client %N", effect[client], proxyEntity[client], client);
-
     DataPack pack;    // Create a datapack which we will use for refire timings below.
 
     char     sRefire[512];
@@ -623,9 +620,7 @@ public Action HandleRefire(Handle timer, DataPack pack)
 
     GetEntPropVector(ent, Prop_Send, "m_vecOrigin", pos);    // Update position vector with default position values
 
-    // particleEntity[client] = AttachParticle(ent, buffer);
     CreateTempParticle(buffer, ent);
-    LogMessage("Refire taunt for %N particleEntity=%d", client, ent);
 
     return Plugin_Handled;
 }
@@ -683,69 +678,7 @@ public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
 
     FetchWearables(client, steamid);    // Fetch the wearable set from the database.
 
-    // Item attribute 2025 is a attribute definition for killstreak tiers
-    // Item attribute 2014 is a attribute definition for killstreak sheens
-    // Item attribute 2013 is a attribute definition for killstreak effects
-    // REF: https://wiki.teamfortress.com/wiki/List_of_item_attributes
-
-    // OnResupply, ensure to override default item attributes again with desired attributes.
-    CreateTimer(0.1, ProcessWeaponsHandler, client);    // Process weapons after a slight delay to ensure player has spawned.
-
     return Plugin_Handled;
-}
-
-Action ProcessWeaponsHandler(Handle timer, int client)
-{
-    Player player    = Player(client);
-
-    // These will be valid entities on resupply due to player has be alive for resupply to take place.
-    int    slot1     = TF2Econ_TranslateLoadoutSlotNameToIndex("primary");
-    int    slot2     = TF2Econ_TranslateLoadoutSlotNameToIndex("secondary");
-    int    slot3     = TF2Econ_TranslateLoadoutSlotNameToIndex("melee");
-
-    int    primary   = ProcessLoadoutSlot(slot1, client);
-    int    secondary = ProcessLoadoutSlot(slot2, client);
-    int    melee     = ProcessLoadoutSlot(slot3, client);
-
-    if (IsValidEntity(primary))
-    {
-        if (player.GetKillstreakTierId(slot1) > 0)                                               // Only do if player has selected a killstreak tier
-            TF2Attrib_SetByDefIndex(primary, 2025, float(player.GetKillstreakTierId(slot1)));    // Updates killstreak tier attribute to selected value
-        if (player.GetKillstreakSheenId(slot1) > 0)
-            TF2Attrib_SetByDefIndex(primary, 2014, float(player.GetKillstreakSheenId(slot1)));
-        if (player.GetKillstreakEffectId(slot1) > 0)
-            TF2Attrib_SetByDefIndex(primary, 2013, float(player.GetKillstreakEffectId(slot1)));
-        if (player.GetUnusualWeaponEffect(slot1) > 0)
-            TF2Attrib_SetByDefIndex(primary, 134, float(player.GetUnusualWeaponEffect(slot1)));
-    }
-
-    // Secondary Weapons
-    if (IsValidEntity(secondary))
-    {
-        if (player.GetKillstreakTierId(slot2) > 0)                                                 // Only do if player has selected a killstreak tier
-            TF2Attrib_SetByDefIndex(secondary, 2025, float(player.GetKillstreakTierId(slot2)));    // Updates killstreak tier attribute to selected value
-        if (player.GetKillstreakSheenId(slot2) > 0)
-            TF2Attrib_SetByDefIndex(secondary, 2014, float(player.GetKillstreakSheenId(slot2)));
-        if (player.GetKillstreakEffectId(slot2) > 0)
-            TF2Attrib_SetByDefIndex(secondary, 2013, float(player.GetKillstreakEffectId(slot2)));
-        if (player.GetUnusualWeaponEffect(slot2) > 0)
-            TF2Attrib_SetByDefIndex(secondary, 134, float(player.GetUnusualWeaponEffect(slot2)));
-    }
-
-    // Melee Weapons
-    if (IsValidEntity(melee))
-    {
-        if (player.GetKillstreakTierId(slot3) > 0)                                             // Only do if player has selected a killstreak tier
-            TF2Attrib_SetByDefIndex(melee, 2025, float(player.GetKillstreakTierId(slot3)));    // Updates killstreak tier attribute to selected value
-        if (player.GetKillstreakSheenId(slot3) > 0)
-            TF2Attrib_SetByDefIndex(melee, 2014, float(player.GetKillstreakSheenId(slot3)));
-        if (player.GetKillstreakEffectId(slot3) > 0)
-            TF2Attrib_SetByDefIndex(melee, 2013, float(player.GetKillstreakEffectId(slot3)));
-        if (player.GetUnusualWeaponEffect(slot3) > 0)
-            TF2Attrib_SetByDefIndex(melee, 134, float(player.GetUnusualWeaponEffect(slot3)));
-    }
-
-    return Plugin_Stop;
 }
 
 // Command Handlers
@@ -1234,7 +1167,6 @@ public void DeleteParticle(int particle)
         AcceptEntityInput(particle, "DestroyImmediately");    // Some particles don't disappear without this
         AcceptEntityInput(particle, "Kill");                  // Hotfix to destroy some particles from server on next game frame.
         RemoveEdict(particle);                                // Remove it from the server to reduce entity count.
-        LogMessage("Particle %d removed.", particle);
     }
 }
 
@@ -1333,6 +1265,28 @@ public Action ProcessWeapons(int client, int itemIndex, Handle &hItem)
         	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot1)));    // Set "attach particle (134) attribute to players desired unusual effect.
 			attributes++;
     	}
+
+		if (player.GetKillstreakTierId(slot1) > 0) {                                               
+            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot1)));    
+			attributes++;
+		}
+
+        if (player.GetKillstreakSheenId(slot1) > 0) {
+            TF2Items_SetAttribute(hItem, 2, 2014, float(player.GetKillstreakSheenId(slot1)));
+			attributes++;
+		}
+
+        if (player.GetKillstreakEffectId(slot1) > 0) {
+            TF2Items_SetAttribute(hItem, 3, 2013, float(player.GetKillstreakEffectId(slot1)));
+			attributes++;
+		}
+
+        if (player.GetUnusualWeaponEffect(slot1) > 0) {
+            TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot1)));
+			attributes++;
+		}
+
+		TF2Items_SetNumAttributes(hItem, attributes);
 	}
 
 	if(loadoutSlot == slot2) {
@@ -1342,6 +1296,28 @@ public Action ProcessWeapons(int client, int itemIndex, Handle &hItem)
         	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot2)));    // Set "attach particle (134) attribute to players desired unusual effect.
 			attributes++;
    		}
+
+		if (player.GetKillstreakTierId(slot2) > 0) {                                               
+            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot2)));    
+			attributes++;
+		}
+
+        if (player.GetKillstreakSheenId(slot2) > 0) {
+            TF2Items_SetAttribute(hItem, 2, 2014, float(player.GetKillstreakSheenId(slot2)));
+			attributes++;
+		}
+
+        if (player.GetKillstreakEffectId(slot2) > 0) {
+            TF2Items_SetAttribute(hItem, 3, 2013, float(player.GetKillstreakEffectId(slot2)));
+			attributes++;
+		}
+
+        if (player.GetUnusualWeaponEffect(slot2) > 0) {
+            TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot2)));
+			attributes++;
+		}
+
+		TF2Items_SetNumAttributes(hItem, attributes);
 	}
 
 	if(loadoutSlot == slot3) {
@@ -1351,9 +1327,29 @@ public Action ProcessWeapons(int client, int itemIndex, Handle &hItem)
         	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot3)));    // Set "attach particle (134) attribute to players desired unusual effect.
 			attributes++;
     	}
-	}
 
-	TF2Items_SetNumAttributes(hItem, attributes);
+		if (player.GetKillstreakTierId(slot3) > 0) {                                               
+            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot3)));    
+			attributes++;
+		}
+
+        if (player.GetKillstreakSheenId(slot3) > 0) {
+            TF2Items_SetAttribute(hItem, 2, 2014, float(player.GetKillstreakSheenId(slot3)));
+			attributes++;
+		}
+
+        if (player.GetKillstreakEffectId(slot3) > 0) {
+            TF2Items_SetAttribute(hItem, 3, 2013, float(player.GetKillstreakEffectId(slot3)));
+			attributes++;
+		}
+
+        if (player.GetUnusualWeaponEffect(slot3) > 0) {
+            TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot3)));
+			attributes++;
+		}
+
+		TF2Items_SetNumAttributes(hItem, attributes);
+	}
 
     return Plugin_Changed;
 }
@@ -1504,8 +1500,6 @@ int CreateTauntEntity(int client, char[] effect)
 
     SetVariantString("taunt_effect");
     AcceptEntityInput(iTaunt, "SetParentAttachment", client);
-
-    LogMessage("particleEntity=%d for client=%N created", iTaunt, client);
 
     CreateTempParticle(effect, iTaunt, _, _);
 
