@@ -1,7 +1,7 @@
 #include <sourcemod>
 #include <tf2_stocks>
 #include <sdktools>
-
+#include <morecolors>
 #include <tf2items>
 #include <tf2attributes>
 #include <tf_econ_data>
@@ -597,7 +597,6 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
         if (fRefireTime >> 0.0)
         {
             refireTimer[client] = CreateDataTimer(fRefireTime, HandleRefire, pack, TIMER_REPEAT);
-            pack.WriteCell(client);
             pack.WriteString(effect[client]);
             pack.WriteCell(proxyEntity[client]);
         }
@@ -609,12 +608,11 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 public Action HandleRefire(Handle timer, DataPack pack)
 {
     char  buffer[64];     // Unusual taunt effect passed through
-    int   client, ent;    // Client passed through
+    int   ent;    // Client passed through
     float pos[3];
 
     // Datapacks require the data that is written to them be read in the same order it was written to.
     pack.Reset();                               // Reset datapack incase there is data left over.
-    client = pack.ReadCell();                   // Get client index passed through
     pack.ReadString(buffer, sizeof(buffer));    // Get unusual effect passed through.
     ent = pack.ReadCell();
 
@@ -917,28 +915,44 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {                                                                // If temporary variable has been set, update values.
                     TF2Attrib_SetByDefIndex(wep, 2025, float(tTier[client]));    // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
-                    tTier[client] = 0;
+
+					// TODO: Translations
+					// CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}primary.", killStreakTierMenuItems[tTier[client]+1]);
+
+					tTier[client] = 0;
                 }
 
                 if (tSheen[client] > 0)
                 {
                     TF2Attrib_SetByDefIndex(wep, 2014, float(tSheen[client]));    // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
-                    tSheen[client] = 0;
+
+					// TODO: Translations
+					// CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}primary.", killStreakSheenMenuItems[tSheen[client]]);
+
+					tSheen[client] = 0;
                 }
 
                 if (tEffect[client] > 0)
                 {
                     TF2Attrib_SetByDefIndex(wep, 2013, float(tEffect[client]));    // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
-                    tEffect[client] = 0;
+
+					// TODO: Translations
+					// CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}primary.", killStreakEffectMenuItems[tEffect[client]]);
+
+					tEffect[client] = 0;
                 }
 
                 if (tWeaponEffect[client] > 0)
                 {
                     TF2Attrib_SetByDefIndex(wep, 134, float(tWeaponEffect[client]));    // Updates weapon unusual effect to temporary value, permanent value used in OnResupply
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
-                    tWeaponEffect[client] = 0;
+
+					// TODO: Translations
+					// CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}primary.", unusualWeaponMenuItems[tWeaponEffect[client]]);
+
+					tWeaponEffect[client] = 0;
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
@@ -1089,6 +1103,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     // Set unusualTauntMenuId to desired effect by matching index of display name with id.
                     player.SetUnusualTauntEffectId(tName);
+
+					// TODO: Translations
+					tauntEffectNameList.GetString(i+1, tName, sizeof(tName));
+					CPrintToChat(client, "You have chosen unusual taunt effect: {red}%s", tName);
+					
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
                     UpdateWearables(client, steamid);    // Update the wearable attributes set by player by writing changes to database.
                     break;
@@ -1104,6 +1123,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     // LogMessage("tName: %s", tName);
                     player.SetUnusualHatEffectId(StringToInt(tName));
+
+					// TODO: Translations
+					unusualEffectNameList.GetString(i+1, tName, sizeof(tName));
+					CPrintToChat(client, "You have chosen unusual hat effect: {red}%s", tName);
+
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
                     UpdateWearables(client, steamid);    // Update the wearable attributes set by player by writing changes to database.
                     break;
