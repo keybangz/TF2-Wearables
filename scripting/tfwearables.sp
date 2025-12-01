@@ -201,13 +201,19 @@ public void OnPluginStart()
     cDatabaseName = CreateConVar("tf_wearables_db", "wearables", "Name of the database connecting to store player data.", _, false, _, false, _);
     cTableName    = CreateConVar("tf_wearables_table", "wearables", "Name of the table holding the player data in the database.", _, false, _, false, _);
 
-    // In-game events the plugin should listen to.
-    // If other plugins are manually invoking these events, THESE EVENTS WILL FIRE. (Bad practice to manually invoke events anyways)
-    // HookEvent("post_inventory_application", OnResupply);    // When player touches resupply locker, respawns or manually invokes a refresh of player items.
+    cEnabled.AddChangeHook(WearablesOnEnabled);
 
-    // Admin Commands
-    RegAdminCmd("sm_wearables", WearablesCommand, ADMFLAG_RESERVATION, "Shows the wearables menu.");    // Translates to /wearables in-game
+    if (cEnabled.BoolValue)
+    {
+        IntializePlugin();
 
+        // Admin Commands
+        RegAdminCmd("sm_wearables", WearablesCommand, ADMFLAG_RESERVATION, "Shows the wearables menu.");    // Translates to /wearables in-game
+    }
+}
+
+public void IntializePlugin()
+{
     // Initialize new ArrayList to store all hat id's inside game, used in ReadItemSchema()
     hatIDList             = new ArrayList(ByteCountToCells(512));
     unusualEffectNameList = new ArrayList(ByteCountToCells(512));
@@ -235,6 +241,60 @@ public void OnPluginStart()
 
     // Connect to database here.
     Database.Connect(DatabaseHandler, dbname);    // Pass string buffer to connect method.
+
+    LogMessage("TF2 Wearables intialized and connected!");
+}
+
+public void WearablesOnEnabled(ConVar convar, char[] oldValue, char[] newValue)
+{
+    char steamid[32];
+
+    if (StringToInt(newValue) == 1 && StringToInt(oldValue) == 0)
+    {
+        IntializePlugin();
+
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            if (!IsClientInGame(i) || IsFakeClient(i))
+                continue;
+
+            if (!GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
+                continue;
+
+            FetchWearables(i, steamid);
+        }
+    }
+    else if (StringToInt(oldValue) == 1 && StringToInt(newValue) == 0) {    // Perform plugin cleanup if plugin disabled.
+        for (int i = 1; i <= MaxClients; i++)
+        {
+            if (!IsClientInGame(i) || IsFakeClient(i))
+                continue;
+
+            if (!GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
+                continue;
+
+            UpdateWearables(i, steamid);
+
+			AcceptEntityInput(proxyEntity[i], "ClearParent");
+        	TeleportEntity(proxyEntity[i], { 1000.0, 1000.0, 1000.0 }, NULL_VECTOR, NULL_VECTOR);
+			ClearTempParticles(proxyEntity[i]);
+			DeleteParticle(proxyEntity[i]);
+
+			if(IsPlayerAlive(i))
+				TF2_RegeneratePlayer(i);
+        }
+
+        // WearablesDB.Close(); Not worth closing the database handle.
+
+        delete hatIDList;
+        delete unusualEffectNameList;
+        delete unusualEffectIDList;
+        delete tauntEffectList;
+        delete tauntEffectNameList;
+        delete tauntRefireTimerList;
+
+        LogMessage("TF2 Wearables plugin has successfully been disabled.");
+    }
 }
 
 void OnTranslationPair(const char[] key, const char[] value)
@@ -405,10 +465,12 @@ public     void SetUnusualWeaponEffectId(int val, int slot)
 // Unusual effects cannot be fetched & applied fast enough to update before player spawns, here we'll grab Unusual Taunt + Unusual Hat Effect and set them since we can do that without any extra information. (such as weapon slots)
 public void OnClientPutInServer(int client)
 {
-    if (IsFakeClient(client))
-    {    // Check if the client is a fake or not. If the client is fake, we stop the function so we don't send unnecessary queries to the database.
+    if (!cEnabled.BoolValue)
         return;
-    }
+
+    // Check if the client is a fake or not. If the client is fake, we stop the function so we don't send unnecessary queries to the database.
+    if (IsFakeClient(client))
+        return;
 
     // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
     char steamid[32];                                                         // Buffer to store SteamID32
@@ -418,35 +480,38 @@ public void OnClientPutInServer(int client)
     FetchWearables(client, steamid);
 }
 
-public void OnMapEnd() {
-	if(!cEnabled.BoolValue)
-		return;
+public void OnMapEnd()
+{
+    if (!cEnabled.BoolValue)
+        return;
 
-	char steamid[32];
+    char steamid[32];
 
-	for(int i = 1; i <= MaxClients; i++) {
-		if(!IsClientInGame(i) || IsFakeClient(i))
-			continue;
+    for (int i = 1; i <= MaxClients; i++)
+    {
+        if (!IsClientInGame(i) || IsFakeClient(i))
+            continue;
 
-		if (!GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
-       		continue;
+        if (!GetClientAuthId(i, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
+            continue;
 
-		UpdateWearables(i, steamid);
-	}
+        UpdateWearables(i, steamid);
+    }
 }
 
-public void OnClientDisconnect(int client) {
-	if(!cEnabled.BoolValue)
-		return;
+public void OnClientDisconnect(int client)
+{
+    if (!cEnabled.BoolValue)
+        return;
 
-	if(IsFakeClient(client))
-		return;
+    if (IsFakeClient(client))
+        return;
 
-	char steamid[32];                                                         // Buffer to store SteamID32
+    char steamid[32];                                                         // Buffer to store SteamID32
     if (!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
         return;
 
-	UpdateWearables(client, steamid);
+    UpdateWearables(client, steamid);
 }
 
 // FetchWearables - Used to fetch all data that might be already stored for the player inside the database.
@@ -587,7 +652,7 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
     if (!cEnabled.BoolValue)    // If plugin is not enabled, do nothing.
         return;
 
-    if (!IsClientInGame(client) || !IsPlayerAlive(client))    // Self explanatory
+    if (!IsClientInGame(client) || !IsPlayerAlive(client))
         return;
 
     if (condition != TFCond_Taunting)
@@ -638,8 +703,8 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
 // Timer callback handled per client to reissue any unusual taunt effects which have an expiry time.
 public Action HandleRefire(Handle timer, DataPack pack)
 {
-    char  buffer[64];     // Unusual taunt effect passed through
-    int   ent;    // Client passed through
+    char  buffer[64];    // Unusual taunt effect passed through
+    int   ent;           // Client passed through
     float pos[3];
 
     // Datapacks require the data that is written to them be read in the same order it was written to.
@@ -689,33 +754,12 @@ public void RequestDelete(DataPack pack)
     DeleteParticle(proxy);
 }
 
-// Hooked Events
-// public Action OnResupply(Event event, const char[] name, bool dontBroadcast)
-// {
-//     if (!cEnabled.BoolValue)    // If plugin is not enabled, do nothing.
-//         return Plugin_Handled;
-
-//     int client = GetClientOfUserId(GetEventInt(event, "userid"));
-
-//     if (!IsClientInGame(client))
-//         return Plugin_Handled;
-
-//     // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
-//     char steamid[32];                                                         // Buffer to store SteamID32
-//     if (!GetClientAuthId(client, AuthId_Steam2, steamid, sizeof(steamid)))    // Grab player SteamID32, if fails do nothing.
-//         return Plugin_Continue;
-
-//     FetchWearables(client, steamid);    // Fetch the wearable set from the database.
-
-//     return Plugin_Handled;
-// }
-
 // Command Handlers
 public Action WearablesCommand(int client, int args)
 {
     if (client <= 0)
     {
-        PrintToServer("[TF2 Wearables] This command is not available to the server console");    // Properly handle command for server console, instead of throwing an error.
+        PrintToServer("This command is not available to the server console");    // Properly handle command for server console, instead of throwing an error.
         return Plugin_Handled;
     }
 
@@ -947,10 +991,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2025, float(tTier[client]));    // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
 
-					// TODO: Translations
-					// CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", killStreakTierMenuItems[tTier[client]+1], info);
+                    // TODO: Translations
+                    // CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", killStreakTierMenuItems[tTier[client]+1], info);
 
-					tTier[client] = 0;
+                    tTier[client] = 0;
                 }
 
                 if (tSheen[client] > 0)
@@ -958,10 +1002,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2014, float(tSheen[client]));    // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
 
-					// TODO: Translations
-					// CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", killStreakSheenMenuItems[tSheen[client]], info);
+                    // TODO: Translations
+                    // CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", killStreakSheenMenuItems[tSheen[client]], info);
 
-					tSheen[client] = 0;
+                    tSheen[client] = 0;
                 }
 
                 if (tEffect[client] > 0)
@@ -969,10 +1013,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2013, float(tEffect[client]));    // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
 
-					// TODO: Translations
-					// CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", killStreakEffectMenuItems[tEffect[client]], info);
+                    // TODO: Translations
+                    // CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", killStreakEffectMenuItems[tEffect[client]], info);
 
-					tEffect[client] = 0;
+                    tEffect[client] = 0;
                 }
 
                 if (tWeaponEffect[client] > 0)
@@ -980,10 +1024,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 134, float(tWeaponEffect[client]));    // Updates weapon unusual effect to temporary value, permanent value used in OnResupply
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
 
-					// TODO: Translations
-					// CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", unusualWeaponMenuItems[tWeaponEffect[client]], info);
+                    // TODO: Translations
+                    // CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", unusualWeaponMenuItems[tWeaponEffect[client]], info);
 
-					tWeaponEffect[client] = 0;
+                    tWeaponEffect[client] = 0;
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
@@ -1132,10 +1176,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     // Set unusualTauntMenuId to desired effect by matching index of display name with id.
                     player.SetUnusualTauntEffectId(tName);
 
-					// TODO: Translations
-					tauntEffectNameList.GetString(i+1, tName, sizeof(tName));
-					CPrintToChat(client, "You have chosen unusual taunt effect: {red}%s", tName);
-					
+                    // TODO: Translations
+                    tauntEffectNameList.GetString(i + 1, tName, sizeof(tName));
+                    CPrintToChat(client, "You have chosen unusual taunt effect: {red}%s", tName);
+
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
                     break;
                 }
@@ -1151,9 +1195,9 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     // LogMessage("tName: %s", tName);
                     player.SetUnusualHatEffectId(StringToInt(tName));
 
-					// TODO: Translations
-					unusualEffectNameList.GetString(i+1, tName, sizeof(tName));
-					CPrintToChat(client, "You have chosen unusual hat effect: {red}%s", tName);
+                    // TODO: Translations
+                    unusualEffectNameList.GetString(i + 1, tName, sizeof(tName));
+                    CPrintToChat(client, "You have chosen unusual hat effect: {red}%s", tName);
 
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
                     break;
@@ -1266,13 +1310,16 @@ void ClearTempParticles(int entity)
 // TF2Items_OnGiveNamedItem - from <tf2items>, called whenever a player gets a fresh set of items (when changing class, respawning(?), etc)
 public Action TF2Items_OnGiveNamedItem(int client, char[] className, int itemIndex, Handle &hItem)
 {
+    if (!cEnabled.BoolValue)
+        return Plugin_Continue;
+
     hItem = TF2Items_CreateItem(OVERRIDE_ATTRIBUTES | PRESERVE_ATTRIBUTES);    // Assign our item to be changing, we want to be keeping the old attributes of the players item but also overriding any we wish.
 
     if (StrEqual(className, "tf_wearable"))
         ProcessHats(client, itemIndex, hItem);
-    else if(StrContains(className, "tf_weapon_") != -1)
-		ProcessWeapons(client, itemIndex, hItem);
-	else
+    else if (StrContains(className, "tf_weapon_") != -1)
+        ProcessWeapons(client, itemIndex, hItem);
+    else
         return Plugin_Continue;
 
     return Plugin_Changed;
@@ -1301,98 +1348,113 @@ public Action ProcessWeapons(int client, int itemIndex, Handle &hItem)
     int    slot1       = TF2Econ_TranslateLoadoutSlotNameToIndex("primary");
     int    slot2       = TF2Econ_TranslateLoadoutSlotNameToIndex("secondary");
     int    slot3       = TF2Econ_TranslateLoadoutSlotNameToIndex("melee");
-	int attributes = 0;
+    int    attributes  = 0;
 
     int    loadoutSlot = TF2Econ_GetItemDefaultLoadoutSlot(itemIndex);
 
-	if(loadoutSlot == slot1) {
-		if (player.GetUnusualWeaponEffect(slot1) > 0)
-    	{
-        	TF2Items_SetQuality(hItem, 5);                                                        // Set to unusual quality.
-        	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot1)));    // Set "attach particle (134) attribute to players desired unusual effect.
-			attributes++;
-    	}
+    if (loadoutSlot == slot1)
+    {
+        if (player.GetUnusualWeaponEffect(slot1) > 0)
+        {
+            TF2Items_SetQuality(hItem, 5);                                                        // Set to unusual quality.
+            TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot1)));    // Set "attach particle (134) attribute to players desired unusual effect.
+            attributes++;
+        }
 
-		if (player.GetKillstreakTierId(slot1) > 0) {                                               
-            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot1)));    
-			attributes++;
-		}
+        if (player.GetKillstreakTierId(slot1) > 0)
+        {
+            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot1)));
+            attributes++;
+        }
 
-        if (player.GetKillstreakSheenId(slot1) > 0) {
+        if (player.GetKillstreakSheenId(slot1) > 0)
+        {
             TF2Items_SetAttribute(hItem, 2, 2014, float(player.GetKillstreakSheenId(slot1)));
-			attributes++;
-		}
+            attributes++;
+        }
 
-        if (player.GetKillstreakEffectId(slot1) > 0) {
+        if (player.GetKillstreakEffectId(slot1) > 0)
+        {
             TF2Items_SetAttribute(hItem, 3, 2013, float(player.GetKillstreakEffectId(slot1)));
-			attributes++;
-		}
+            attributes++;
+        }
 
-        if (player.GetUnusualWeaponEffect(slot1) > 0) {
+        if (player.GetUnusualWeaponEffect(slot1) > 0)
+        {
             TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot1)));
-			attributes++;
-		}
-	}
+            attributes++;
+        }
+    }
 
-	if(loadoutSlot == slot2) {
-		if (player.GetUnusualWeaponEffect(slot2))
-    	{
-        	TF2Items_SetQuality(hItem, 5);                                                        // Set to unusual quality.
-        	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot2)));    // Set "attach particle (134) attribute to players desired unusual effect.
-			attributes++;
-   		}
+    if (loadoutSlot == slot2)
+    {
+        if (player.GetUnusualWeaponEffect(slot2))
+        {
+            TF2Items_SetQuality(hItem, 5);                                                        // Set to unusual quality.
+            TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot2)));    // Set "attach particle (134) attribute to players desired unusual effect.
+            attributes++;
+        }
 
-		if (player.GetKillstreakTierId(slot2) > 0) {                                               
-            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot2)));    
-			attributes++;
-		}
+        if (player.GetKillstreakTierId(slot2) > 0)
+        {
+            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot2)));
+            attributes++;
+        }
 
-        if (player.GetKillstreakSheenId(slot2) > 0) {
+        if (player.GetKillstreakSheenId(slot2) > 0)
+        {
             TF2Items_SetAttribute(hItem, 2, 2014, float(player.GetKillstreakSheenId(slot2)));
-			attributes++;
-		}
+            attributes++;
+        }
 
-        if (player.GetKillstreakEffectId(slot2) > 0) {
+        if (player.GetKillstreakEffectId(slot2) > 0)
+        {
             TF2Items_SetAttribute(hItem, 3, 2013, float(player.GetKillstreakEffectId(slot2)));
-			attributes++;
-		}
+            attributes++;
+        }
 
-        if (player.GetUnusualWeaponEffect(slot2) > 0) {
+        if (player.GetUnusualWeaponEffect(slot2) > 0)
+        {
             TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot2)));
-			attributes++;
-		}
-	}
+            attributes++;
+        }
+    }
 
-	if(loadoutSlot == slot3) {
-		if (player.GetUnusualWeaponEffect(slot3) > 0)
-    	{
-        	TF2Items_SetQuality(hItem, 5);                                                        // Set to unusual quality.
-        	TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot3)));    // Set "attach particle (134) attribute to players desired unusual effect.
-			attributes++;
-    	}
+    if (loadoutSlot == slot3)
+    {
+        if (player.GetUnusualWeaponEffect(slot3) > 0)
+        {
+            TF2Items_SetQuality(hItem, 5);                                                        // Set to unusual quality.
+            TF2Items_SetAttribute(hItem, 0, 134, float(player.GetUnusualWeaponEffect(slot3)));    // Set "attach particle (134) attribute to players desired unusual effect.
+            attributes++;
+        }
 
-		if (player.GetKillstreakTierId(slot3) > 0) {                                               
-            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot3)));    
-			attributes++;
-		}
+        if (player.GetKillstreakTierId(slot3) > 0)
+        {
+            TF2Items_SetAttribute(hItem, 1, 2025, float(player.GetKillstreakTierId(slot3)));
+            attributes++;
+        }
 
-        if (player.GetKillstreakSheenId(slot3) > 0) {
+        if (player.GetKillstreakSheenId(slot3) > 0)
+        {
             TF2Items_SetAttribute(hItem, 2, 2014, float(player.GetKillstreakSheenId(slot3)));
-			attributes++;
-		}
+            attributes++;
+        }
 
-        if (player.GetKillstreakEffectId(slot3) > 0) {
+        if (player.GetKillstreakEffectId(slot3) > 0)
+        {
             TF2Items_SetAttribute(hItem, 3, 2013, float(player.GetKillstreakEffectId(slot3)));
-			attributes++;
-		}
+            attributes++;
+        }
 
-        if (player.GetUnusualWeaponEffect(slot3) > 0) {
+        if (player.GetUnusualWeaponEffect(slot3) > 0)
+        {
             TF2Items_SetAttribute(hItem, 4, 134, float(player.GetUnusualWeaponEffect(slot3)));
-			attributes++;
-		}
-	}
+            attributes++;
+        }
+    }
 
-	TF2Items_SetNumAttributes(hItem, attributes);
+    TF2Items_SetNumAttributes(hItem, attributes);
 
     return Plugin_Changed;
 }
@@ -1409,6 +1471,9 @@ public int ProcessLoadoutSlot(int slotIndex, int client)
 // Function made to traverse the items_game schema and grab all "hat" item indexes so we can only give unusual effects to hats.
 public void ReadItemSchema()
 {
+    if (!cEnabled.BoolValue)
+        return;
+
     KeyValues kv = new KeyValues("items_game");
     kv.ImportFromFile("scripts/items/items_game.txt");
 
