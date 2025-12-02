@@ -66,6 +66,7 @@ int       tTier[MAXPLAYERS + 1];
 int       tSheen[MAXPLAYERS + 1];
 int       tEffect[MAXPLAYERS + 1];
 int       tWeaponEffect[MAXPLAYERS + 1];
+char      tMenuSelection[MAXPLAYERS+1][64];
 
 Database  WearablesDB           = null;    // Setup database handle we will be using in our plugin.
 
@@ -275,13 +276,16 @@ public void WearablesOnEnabled(ConVar convar, char[] oldValue, char[] newValue)
 
             UpdateWearables(i, steamid);
 
-			AcceptEntityInput(proxyEntity[i], "ClearParent");
-        	TeleportEntity(proxyEntity[i], { 1000.0, 1000.0, 1000.0 }, NULL_VECTOR, NULL_VECTOR);
-			ClearTempParticles(proxyEntity[i]);
-			DeleteParticle(proxyEntity[i]);
+            if (proxyEntity[i] >= 1)
+            {
+                AcceptEntityInput(proxyEntity[i], "ClearParent");
+                TeleportEntity(proxyEntity[i], { 1000.0, 1000.0, 1000.0 }, NULL_VECTOR, NULL_VECTOR);
+                ClearTempParticles(proxyEntity[i]);
+                DeleteParticle(proxyEntity[i]);
+            }
 
-			if(IsPlayerAlive(i))
-				TF2_RegeneratePlayer(i);
+            if (IsPlayerAlive(i))
+                TF2_RegeneratePlayer(i);
         }
 
         // WearablesDB.Close(); Not worth closing the database handle.
@@ -665,16 +669,6 @@ public void TF2_OnConditionAdded(int client, TFCond condition)
     if (!strlen(effect[client]))
         return;
 
-    float fPos[3], fAngles[3], fForward[3], fRight[3], fUp[3], fOffset[3];
-
-    GetClientAbsOrigin(client, fPos);
-    GetClientAbsAngles(client, fAngles);
-
-    GetAngleVectors(fAngles, fForward, fRight, fUp);
-    fPos[0] += fRight[0] * fOffset[0] + fForward[0] * fOffset[1] + fUp[0] * fOffset[2];
-    fPos[1] += fRight[1] * fOffset[0] + fForward[1] * fOffset[1] + fUp[1] * fOffset[2];
-    fPos[2] += fRight[2] * fOffset[0] + fForward[2] * fOffset[1] + fUp[2] * fOffset[2];
-
     // AttachParticle(client, effect[client]); // Create and attach desired particle effect to player.
     proxyEntity[client] = CreateTauntEntity(client, effect[client]);
 
@@ -800,6 +794,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             {
                 menu.AddItem(wearableMenuItems[i], wearableMenuItems[i]);
             }
+
+            menu.ExitBackButton = false;
         }
         case killStreakMenu:
         {    // Killstreaks Main Menu
@@ -808,6 +804,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             {
                 menu.AddItem(killStreakMenuItems[i], killStreakMenuItems[i]);
             }
+
+            menu.ExitBackButton = true;
         }
         case unusualTauntMenu:
         {    // Unusual Taunts Main Menu
@@ -845,6 +843,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
                 // LogMessage("tauntEffect: %s, tauntName: %s", tauntEffect, tauntName);
                 menu.AddItem(tauntEffect, tauntName);
             }
+
+            menu.ExitBackButton = true;
         }
         case killStreakTierMenu:
         {    // Killstreaks Tier Menu
@@ -853,6 +853,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             {
                 menu.AddItem(killStreakTierMenuItems[i], killStreakTierMenuItems[i]);
             }
+
+            menu.ExitBackButton = true;
         }
 
         case killStreakSheenMenu:
@@ -862,6 +864,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             {
                 menu.AddItem(killStreakSheenMenuItems[i], killStreakSheenMenuItems[i]);
             }
+
+            menu.ExitBackButton = true;
         }
 
         case killStreakEffectMenu:
@@ -871,6 +875,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             {
                 menu.AddItem(killStreakEffectMenuItems[i], killStreakEffectMenuItems[i]);
             }
+
+            menu.ExitBackButton = true;
         }
 
         case slotSelectMenu:
@@ -880,6 +886,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             {
                 menu.AddItem(weaponSlotMenuItems[i], weaponSlotMenuItems[i]);
             }
+
+            menu.ExitBackButton = true;
         }
 
         case unusualMenu:
@@ -895,6 +903,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 
                 menu.AddItem(effectID, effectName);
             }
+
+            menu.ExitBackButton = true;
         }
 
         case unusualWeaponMenu:
@@ -904,6 +914,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             {
                 menu.AddItem(unusualWeaponMenuItems[i], unusualWeaponMenuItems[i]);
             }
+
+            menu.ExitBackButton = true;
         }
     }
 
@@ -923,6 +935,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 
             // SourceMod uses strings as selectors for menus, we will grab our selected menu item string and compare with our available options to give the menu functionality.
             char   info[256];
+
             menu.GetItem(menuItem, info, sizeof(info));
 
             // REF: https://sm.alliedmods.net/new-api/clients/AuthIdType
@@ -934,6 +947,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
             // If item selected is killstreaks, show client killstreak menu.
             if (StrEqual(info, "Killstreak Menu"))
             {
+                menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                 MenuCreate(client, killStreakMenu, "Killstreak Menu");
             }
 
@@ -941,6 +955,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
             // If selected, display available Unusual Taunts for player to choose from.
             if (StrEqual(info, "Unusual Taunts Menu"))
             {
+                menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                 MenuCreate(client, unusualTauntMenu, "Unusual Taunts Menu");
             }
 
@@ -948,6 +963,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
             // IF selected, display all available unusual effects for player to choose from.
             if (StrEqual(info, "Unusual Hats Menu"))
             {
+                menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                 MenuCreate(client, unusualMenu, "Unusual Hats Menu");
             }
 
@@ -955,24 +971,28 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
             // If selected, display available Killstreak Tiers for player to choose from.
             if (StrEqual(info, "Killstreak Tier"))
             {
+                menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                 MenuCreate(client, killStreakTierMenu, "Killstreak Tier Menu");
             }
 
             // If selected, display available Killstreak Sheens for player to choose from.
             if (StrEqual(info, "Killstreak Sheen"))
             {
+                menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                 MenuCreate(client, killStreakSheenMenu, "Killstreak Sheens Menu");
             }
 
             // If selected, display available Killstreak Effects for player to choose from.
             if (StrEqual(info, "Killstreak Effect"))
             {
+                menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                 MenuCreate(client, killStreakEffectMenu, "Killstreak Effects Menu");
             }
 
             // If selected, display available Killstreak Effects for player to choose from.
             if (StrEqual(info, "Unusual Weapons Menu"))
             {
+                menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                 MenuCreate(client, unusualWeaponMenu, "Unusual Weapons Menu");
             }
 
@@ -992,7 +1012,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
 
                     // TODO: Translations
-                    // CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", killStreakTierMenuItems[tTier[client]+1], info);
+                    CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
 
                     tTier[client] = 0;
                 }
@@ -1003,7 +1023,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
 
                     // TODO: Translations
-                    // CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", killStreakSheenMenuItems[tSheen[client]], info);
+                    CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
 
                     tSheen[client] = 0;
                 }
@@ -1014,7 +1034,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
 
                     // TODO: Translations
-                    // CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", killStreakEffectMenuItems[tEffect[client]], info);
+                    CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
 
                     tEffect[client] = 0;
                 }
@@ -1025,7 +1045,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
 
                     // TODO: Translations
-                    // CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", unusualWeaponMenuItems[tWeaponEffect[client]], info);
+                    CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
 
                     tWeaponEffect[client] = 0;
                 }
@@ -1048,6 +1068,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     TF2Attrib_SetByDefIndex(wep, 2025, float(tTier[client]));    // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier effect to be used elsewhere.
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+
                     tTier[client] = 0;
                 }
 
@@ -1055,6 +1079,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     TF2Attrib_SetByDefIndex(wep, 2014, float(tSheen[client]));    // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+
                     tSheen[client] = 0;
                 }
 
@@ -1062,12 +1090,20 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     TF2Attrib_SetByDefIndex(wep, 2013, float(tEffect[client]));    // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+
                     tEffect[client] = 0;
                 }
 
                 if (tWeaponEffect[client] > 0)
                 {
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+
                     tWeaponEffect[client] = 0;
                 }
 
@@ -1089,6 +1125,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     TF2Attrib_SetByDefIndex(wep, 2025, float(tTier[client]));    // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+
                     tTier[client] = 0;
                 }
 
@@ -1096,6 +1136,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     TF2Attrib_SetByDefIndex(wep, 2014, float(tSheen[client]));    // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+
                     tSheen[client] = 0;
                 }
 
@@ -1103,6 +1147,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     TF2Attrib_SetByDefIndex(wep, 2013, float(tEffect[client]));    // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+
                     tEffect[client] = 0;
                 }
 
@@ -1110,6 +1158,9 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
                     tWeaponEffect[client] = 0;
+
+                    // TODO: Translations
+                    CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
@@ -1126,6 +1177,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 // Item attribute 2025 is a attribute definition for killstreak tiers, reference link at OnResupply
                 if (StrEqual(info, killStreakTierMenuItems[i]))
                 {
+                    menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                     MenuCreate(client, slotSelectMenu, "Apply to slot: ");
                     tTier[client] = killStreakTierSel[i] + 1;    // Set our temporary variable to value of our selected killstreak tier.
                     break;
@@ -1139,6 +1191,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 // Item attribute 2014 is a attribute definition for killstreak sheens, reference link at OnResupply
                 if (StrEqual(info, killStreakSheenMenuItems[i]))
                 {
+                    menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                     MenuCreate(client, slotSelectMenu, "Apply to slot: ");
                     tSheen[client] = killStreakSheenSel[i];    // Set our temporary variable to value of our selected killstreak sheen.
                     break;
@@ -1152,6 +1205,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 // Item attribute 2013 is a attribute definition for killstreak effects, reference link at OnResupply
                 if (StrEqual(info, killStreakEffectMenuItems[i]))
                 {
+                    menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                     MenuCreate(client, slotSelectMenu, "Apply to slot: ");
                     tEffect[client] = killStreakEffectSel[i];    // Set our temporary variable to value of our selected killstreak effect.
                     break;
@@ -1177,7 +1231,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     player.SetUnusualTauntEffectId(tName);
 
                     // TODO: Translations
-                    tauntEffectNameList.GetString(i + 1, tName, sizeof(tName));
+                    tauntEffectNameList.GetString(i, tName, sizeof(tName));
                     CPrintToChat(client, "You have chosen unusual taunt effect: {red}%s", tName);
 
                     MenuCreate(client, wearablesMenu, "Wearables Menu");
@@ -1209,9 +1263,90 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 // If value picked on the menu matches our string value, then set item attribute index to value matching at same index.
                 if (StrEqual(info, unusualWeaponMenuItems[i]))
                 {
+                    menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
                     MenuCreate(client, slotSelectMenu, "Apply to slot: ");
                     tWeaponEffect[client] = unusualWeaponSel[i];
                     break;
+                }
+            }
+        }
+        case MenuAction_Cancel:
+        {
+            if (menuItem == MenuCancel_ExitBack)
+            {
+                if (StrEqual(tMenuSelection[client], "Killstreak Menu"))
+                    MenuCreate(client, wearablesMenu, "Wearables Menu");
+
+                if (StrEqual(tMenuSelection[client], "Unusual Taunts Menu"))
+                    MenuCreate(client, wearablesMenu, "Wearables Menu");
+
+                if (StrEqual(tMenuSelection[client], "Unusual Hats Menu"))
+                    MenuCreate(client, wearablesMenu, "Wearables Menu");
+
+                if (StrEqual(tMenuSelection[client], "Killstreak Tier")) {
+                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Menu");
+                    MenuCreate(client, killStreakMenu, "Killstreak Menu");
+                }
+
+                if (StrEqual(tMenuSelection[client], "Killstreak Sheen")) {
+                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Menu");
+                    MenuCreate(client, killStreakMenu, "Killstreak Menu");
+                }
+
+                if (StrEqual(tMenuSelection[client], "Killstreak Effect")) {
+                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Menu");
+                    MenuCreate(client, killStreakMenu, "Killstreak Menu");
+                }
+
+                if (StrEqual(tMenuSelection[client], "Unusual Weapons Menu"))
+                    MenuCreate(client, wearablesMenu, "Wearables Menu");
+
+                for (int i = 0; i < sizeof(killStreakTierMenuItems); i++)
+                {
+                    if (StrEqual(tMenuSelection[client], killStreakTierMenuItems[i]))
+                    {
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Tier");
+
+                        MenuCreate(client, killStreakTierMenu, "Killstreak Tier Menu");
+                        tTier[client] = 0;
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < sizeof(killStreakSheenMenuItems); i++)
+                {
+                    if (StrEqual(tMenuSelection[client], killStreakSheenMenuItems[i]))
+                    {
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Sheen");
+
+                        MenuCreate(client, killStreakSheenMenu, "Killstreak Sheen Menu");
+                        tSheen[client] = 0;
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < sizeof(killStreakEffectMenuItems); i++)
+                {
+                    if (StrEqual(tMenuSelection[client], killStreakEffectMenuItems[i]))
+                    {
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Effect");
+
+                        MenuCreate(client, killStreakEffectMenu, "Killstreak Effect Menu");
+                        tEffect[client] = 0;
+                        break;
+                    }
+                }
+
+                for (int i = 0; i < sizeof(unusualWeaponMenuItems); i++)
+                {
+                    if (StrEqual(tMenuSelection[client], unusualWeaponMenuItems[i]))
+                    {
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Unusual Weapons Menu");
+
+                        MenuCreate(client, unusualWeaponMenu, "Unusual Weapons Menu");
+                        tWeaponEffect[client] = 0;
+                        break;
+                    }
                 }
             }
         }
