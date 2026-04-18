@@ -1,0 +1,8 @@
+"Phrases"
+{
+  "wearables_weapon_unusual_effect"
+  {
+    "format" "{1:s}, {2:s}"
+    "en"    "You have chosen weapon unusual effect: {red}{1}{default} on weapon slot {red}{2}."
+  }
+}

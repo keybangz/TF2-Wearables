@@ -461,11 +461,6 @@ public     void SetUnusualWeaponEffectId(int val, int slot)
     }
 }
 
-// Our goal here from version 1 is too minimize the amount of repitition the previous codebase had used.
-// To do this we will strip a lot of logic into single functions and determine the use case based on the parameters passed.
-// We want to organize our code into a methodmap or some sort of structured way to prevent recreation of variables that we don't need.
-// Unlike the previous version, we will be using SQLite or MySQL to store player preferences, this will provide us with a cleaner codebase and remove the hassle of cookie caching and verification.
-
 // Unusual effects cannot be fetched & applied fast enough to update before player spawns, here we'll grab Unusual Taunt + Unusual Hat Effect and set them since we can do that without any extra information. (such as weapon slots)
 public void OnClientPutInServer(int client)
 {
@@ -521,6 +516,9 @@ public void OnClientDisconnect(int client)
 // FetchWearables - Used to fetch all data that might be already stored for the player inside the database.
 void FetchWearables(int client, char[] steamid)
 {
+    if (!cEnabled.BoolValue)
+        return;
+
     if (IsFakeClient(client) || !IsClientInGame(client))
         return;
 
@@ -1044,8 +1042,9 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 134, float(tWeaponEffect[client]));    // Updates weapon unusual effect to temporary value, permanent value used in OnResupply
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    // TODO: Test Translation implementation.
+                    // CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%T", "wearables_weapon_unusual_effect", tMenuSelection[client], info);
 
                     tWeaponEffect[client] = 0;
                 }
