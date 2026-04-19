@@ -1,6 +1,5 @@
 *.exe
 *.dat
-include/
 
 spcomp.exe
 compile.exe
