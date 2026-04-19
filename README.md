@@ -30,7 +30,6 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 ## Dependencies
 
-- MoreColors (For compiling) - https://forums.alliedmods.net/showthread.php?t=185016
 - TF2Items - https://forums.alliedmods.net/showthread.php?s=9d06c121e0d39d2dd87bf0ef107c763d&t=115100
 - TF2Attributes - https://github.com/FlaminSarge/tf2attributes
 - TF2Utils - https://github.com/nosoop/SM-TFUtils
@@ -38,8 +37,19 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 
 ## Installation
 
-- Place plugin inside `sourcemod/plugins` folder.
+- Place `tfwearables.smx` into your `/plugins` folder `ex: /addons/sourcemod/plugins/`
+- Place `tfwearables.phrases.txt` into your `/translations` folder `ex: /addons/sourcemod/translations/`
 - Add `wearables` MySQL entry to your `databases.cfg` located inside `sourcemod/configs`
+- Restart your server after installation.
+
+**Dynamic unloading and loading of this plugin is not supported!**
+
+## Development
+
+Ensure to setup your SourceMod compiler environment with the includes from the dependencies above, aswell as the development dependencies below:
+
+- MoreColors - https://forums.alliedmods.net/showthread.php?t=185016
+- stocksoup - https://github.com/nosoop/stocksoup/tree/master
 
 ## Credits
 
