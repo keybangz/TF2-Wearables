@@ -1,8 +1,105 @@
 "Phrases"
 {
-  "wearables_weapon_unusual_effect"
-  {
-    "format" "{1:s}, {2:s}"
-    "en"    "You have chosen weapon unusual effect: {red}{1}{default} on weapon slot {red}{2}."
-  }
+    "wearables_killstreak_tier"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "You have chosen killstreak tier: {red}{1}{default} on weapon slot {red}{2}"
+    }
+    "wearables_killstreak_sheen"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "You have chosen killstreak sheen: {red}{1}{default} on weapon slot {red}{2}"
+    }
+    "wearables_killstreak_effect"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "You have chosen killstreak effect: {red}{1}{default} on weapon slot {red}{2}"
+    }
+    "wearables_weapon_unusual_effect"
+    {
+        "#format"   "{1:s},{2:s}"
+        "en"        "You have chosen weapon unusual effect: {red}{1}{default} on weapon slot {red}{2}"
+    }
+    "wearables_taunt_effect"
+    {
+        "#format"   "{1:s}"
+        "en"        "You have chosen unusual taunt effect: {red}{1}"
+    }
+    "wearables_hat_effect"
+    {
+        "#format"   "{1:s}"
+        "en"        "You have chosen unusual hat effect: {red}{1}"
+    }
+    "wearables_menu_name"
+    {
+        "en"        "Wearables Menu"
+    }
+    "wearables_menu_killstreak_name"
+    {
+        "en"        "Killstreak Menu"
+    }
+    "wearables_menu_item_killstreak_tier_name"
+    {
+        "en"        "Killstreak Tier"
+    }
+    "wearables_menu_item_killstreak_sheen_name"
+    {
+        "en"        "Killstreak Sheen"
+    }
+    "wearables_menu_item_killstreak_effect_name"
+    {
+        "en"        "Killstreak Effect"
+    }
+    "wearables_menu_killstreak_tier_name"
+    {
+        "en"        "Killstreak Tier Menu"
+    }
+    "wearables_menu_killstreak_sheen_name"
+    {
+        "en"        "Killstreak Sheen Menu"
+    }
+    "wearables_menu_killstreak_effect_name"
+    {
+        "en"        "Killstreak Effect Menu"
+    }
+    "wearables_menu_killstreak_type_basic"
+    {
+        "en"        "Basic"
+    }
+    "wearables_menu_killstreak_type_specialized"
+    {
+        "en"        "Specialized"
+    }
+    "wearables_menu_killstreak_type_professional"
+    {
+        "en"        "Professional"
+    }
+    "wearables_menu_unusual_taunts"
+    {
+        "en"        "Unusual Taunts Menu"
+    }
+    "wearables_menu_unusual_hats"
+    {
+        "en"        "Unusual Hats Menu"
+    }
+    "wearables_menu_unusual_weapons"
+    {
+        "en"        "Unusual Weapons Menu"
+    }
+    "wearables_menu_slot_select"
+    {
+        "en"        "Apply to slot?:"
+    }
+    "wearables_menu_primary_slot"
+    {
+        "en"        "Primary"
+    }
+    "wearables_menu_secondary_slot"
+    {
+        "en"        "Secondary"
+    }
+    "wearables_menu_melee_slot"
+    {
+        "en"        "Melee"
+    }
 }

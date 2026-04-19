@@ -203,6 +203,7 @@ public void OnPluginStart()
     cTableName    = CreateConVar("tf_wearables_table", "wearables", "Name of the table holding the player data in the database.", _, false, _, false, _);
 
     cEnabled.AddChangeHook(WearablesOnEnabled);
+    LoadTranslations("tf2wearables.phrases");
 
     if (cEnabled.BoolValue)
     {
@@ -228,6 +229,27 @@ public void IntializePlugin()
     // Setup database connection.
     char dbname[64];
     cDatabaseName.GetString(dbname, sizeof(dbname));    // Grab database ConVar string value and store to buffer.
+
+    // TODO: Replace effect item specifiers for killstreaks and unusual weapons loaded from game files.
+    // Setup menu items for translation
+    LogMessage("Setting up menu translations...");
+    Format(wearableMenuItems[0], 128, "%T", "wearables_menu_killstreak_name", LANG_SERVER);
+    Format(wearableMenuItems[1], 128, "%T", "wearables_menu_unusual_taunts", LANG_SERVER);
+    Format(wearableMenuItems[2], 128, "%T", "wearables_menu_unusual_hats", LANG_SERVER);
+    Format(wearableMenuItems[3], 128, "%T", "wearables_menu_unusual_weapons", LANG_SERVER);
+
+    Format(killStreakMenuItems[0], 128, "%T", "wearables_menu_item_killstreak_tier_name", LANG_SERVER);
+    Format(killStreakMenuItems[1], 128, "%T", "wearables_menu_item_killstreak_sheen_name", LANG_SERVER);
+    Format(killStreakMenuItems[2], 128, "%T", "wearables_menu_item_killstreak_effect_name", LANG_SERVER);
+
+    Format(killStreakTierMenuItems[0], 128, "%T", "wearables_menu_killstreak_type_basic", LANG_SERVER);
+    Format(killStreakTierMenuItems[1], 128, "%T", "wearables_menu_killstreak_type_specialized", LANG_SERVER);
+    Format(killStreakTierMenuItems[2], 128, "%T", "wearables_menu_killstreak_type_professional", LANG_SERVER);
+
+    Format(weaponSlotMenuItems[0], 128, "%T", "wearables_menu_primary_slot", LANG_SERVER);
+    Format(weaponSlotMenuItems[1], 128, "%T", "wearables_menu_secondary_slot", LANG_SERVER);
+    Format(weaponSlotMenuItems[2], 128, "%T", "wearables_menu_melee_slot", LANG_SERVER);
+    LogMessage("Menu translations set up.");
 
     TranslationFileParser tfp;
     tfp.Init();
@@ -763,14 +785,15 @@ public Action WearablesCommand(int client, int args)
         return Plugin_Handled;
 
     // Call our menu create function, on command /wearables run, we display the base menu.
-    MenuCreate(client, wearablesMenu, "Wearables Menu");
+    char menuName[128];
+    Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+    MenuCreate(client, wearablesMenu, menuName);
 
     return Plugin_Handled;    // Return Plugin_Handled to prevent "unknown command issues."
 }
 
 // Menu Constructors
 // Switch cases are not fall-through in SourceMod, once a condition is met it will stop the switch at desired case and run block of code.
-// FIXME: Use default: keyword for error handling(?) Not sure if required here, need to test.
 public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitle)
 {
     if (!cEnabled.BoolValue)    // If plugin is not enabled, do nothing.
@@ -806,7 +829,8 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
             menu.ExitBackButton = true;
         }
         case unusualTauntMenu:
-        {    // Unusual Taunts Main Menu
+        {
+            // Unusual Taunts Main Menu
             char tauntName[512];
             char tauntEffect[512];
 
@@ -924,6 +948,7 @@ public void MenuCreate(int client, wearablesOptions menuOptions, char[] menuTitl
 // Menu Handlers
 public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuItem)
 {
+    char menuName[128];
     // We will only be worrying about handling the display of menu & the selection of the menu's items, rest can be ignored unless debugging.
     switch (menuAction)
     {
@@ -943,59 +968,71 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
 
             // Main Menu Handling
             // If item selected is killstreaks, show client killstreak menu.
-            if (StrEqual(info, "Killstreak Menu"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_name", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                MenuCreate(client, killStreakMenu, "Killstreak Menu");
+                MenuCreate(client, killStreakMenu, menuName);
             }
 
             // Unusual Taunt Menu Handling
             // If selected, display available Unusual Taunts for player to choose from.
-            if (StrEqual(info, "Unusual Taunts Menu"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_unusual_taunts", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                MenuCreate(client, unusualTauntMenu, "Unusual Taunts Menu");
+                MenuCreate(client, unusualTauntMenu, menuName);
             }
 
             // Unusual Hat Menu Handling
             // IF selected, display all available unusual effects for player to choose from.
-            if (StrEqual(info, "Unusual Hats Menu"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_unusual_hats", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                MenuCreate(client, unusualMenu, "Unusual Hats Menu");
+                MenuCreate(client, unusualMenu, menuName);
             }
 
             // Killstreak Menu Handling
             // If selected, display available Killstreak Tiers for player to choose from.
-            if (StrEqual(info, "Killstreak Tier"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_tier_name", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                MenuCreate(client, killStreakTierMenu, "Killstreak Tier Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_tier_name", LANG_SERVER);
+                MenuCreate(client, killStreakTierMenu, menuName);
             }
 
             // If selected, display available Killstreak Sheens for player to choose from.
-            if (StrEqual(info, "Killstreak Sheen"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_sheen_name", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                MenuCreate(client, killStreakSheenMenu, "Killstreak Sheens Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_sheen_name", LANG_SERVER);
+                MenuCreate(client, killStreakSheenMenu, menuName);
             }
 
             // If selected, display available Killstreak Effects for player to choose from.
-            if (StrEqual(info, "Killstreak Effect"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_effect_name", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                MenuCreate(client, killStreakEffectMenu, "Killstreak Effects Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_effect_name", LANG_SERVER);
+                MenuCreate(client, killStreakEffectMenu, menuName);
             }
 
             // If selected, display available Killstreak Effects for player to choose from.
-            if (StrEqual(info, "Unusual Weapons Menu"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_unusual_weapons", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                MenuCreate(client, unusualWeaponMenu, "Unusual Weapons Menu");
+                MenuCreate(client, unusualWeaponMenu, menuName);
             }
 
+            // TODO: Update the slot selection interfacing to reduce duplicated code.
             // After selecting a killstreak attribute, player must select which weapon slot to apply the effect too.
-            if (StrEqual(info, "Primary"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_primary_slot", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 int slot = TF2Econ_TranslateLoadoutSlotNameToIndex("primary");
 
@@ -1009,8 +1046,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2025, float(tTier[client]));    // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_tier", tMenuSelection[client], info);
 
                     tTier[client] = 0;
                 }
@@ -1020,8 +1056,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2014, float(tSheen[client]));    // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_sheen", tMenuSelection[client], info);
 
                     tSheen[client] = 0;
                 }
@@ -1031,8 +1066,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2013, float(tEffect[client]));    // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_effect", tMenuSelection[client], info);
 
                     tEffect[client] = 0;
                 }
@@ -1042,19 +1076,19 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 134, float(tWeaponEffect[client]));    // Updates weapon unusual effect to temporary value, permanent value used in OnResupply
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
 
-                    // TODO: Test Translation implementation.
-                    // CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
-                    CPrintToChat(client, "%T", "wearables_weapon_unusual_effect", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_weapon_unusual_effect", tMenuSelection[client], info);
 
                     tWeaponEffect[client] = 0;
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
-                MenuCreate(client, wearablesMenu, "Wearables Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                MenuCreate(client, wearablesMenu, menuName);
             }
 
             // If player chose second weapon slot
-            if (StrEqual(info, "Secondary"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_secondary_slot", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 int slot = TF2Econ_TranslateLoadoutSlotNameToIndex("secondary");
 
@@ -1064,12 +1098,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     return -1;
 
                 if (tTier[client] > 0)
-                {
+                {                                                                // If temporary variable has been set, update values.
                     TF2Attrib_SetByDefIndex(wep, 2025, float(tTier[client]));    // Updates killstreak tier to temporary value, permanent value used in OnResupply
-                    player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier effect to be used elsewhere.
+                    player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_tier", tMenuSelection[client], info);
 
                     tTier[client] = 0;
                 }
@@ -1079,8 +1112,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2014, float(tSheen[client]));    // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_sheen", tMenuSelection[client], info);
 
                     tSheen[client] = 0;
                 }
@@ -1090,28 +1122,29 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2013, float(tEffect[client]));    // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_effect", tMenuSelection[client], info);
 
                     tEffect[client] = 0;
                 }
 
                 if (tWeaponEffect[client] > 0)
                 {
+                    TF2Attrib_SetByDefIndex(wep, 134, float(tWeaponEffect[client]));    // Updates weapon unusual effect to temporary value, permanent value used in OnResupply
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_weapon_unusual_effect", tMenuSelection[client], info);
 
                     tWeaponEffect[client] = 0;
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
-                MenuCreate(client, wearablesMenu, "Wearables Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                MenuCreate(client, wearablesMenu, menuName);
             }
 
             // If player chose melee weapon slot
-            if (StrEqual(info, "Melee"))
+            Format(menuName, sizeof(menuName), "%T", "wearables_menu_melee_slot", LANG_SERVER);
+            if (StrEqual(info, menuName))
             {
                 int slot = TF2Econ_TranslateLoadoutSlotNameToIndex("melee");
 
@@ -1121,12 +1154,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     return -1;
 
                 if (tTier[client] > 0)
-                {
+                {                                                                // If temporary variable has been set, update values.
                     TF2Attrib_SetByDefIndex(wep, 2025, float(tTier[client]));    // Updates killstreak tier to temporary value, permanent value used in OnResupply
                     player.SetKillstreakTierId(tTier[client], slot);             // Update player killstreak tier to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak tier: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_tier", tMenuSelection[client], info);
 
                     tTier[client] = 0;
                 }
@@ -1136,8 +1168,7 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2014, float(tSheen[client]));    // Updates killstreak sheen to temporary value, permanent value used in OnResupply
                     player.SetKillstreakSheenId(tSheen[client], slot);            // Update player killstreak sheen to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak sheen: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_sheen", tMenuSelection[client], info);
 
                     tSheen[client] = 0;
                 }
@@ -1147,23 +1178,24 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     TF2Attrib_SetByDefIndex(wep, 2013, float(tEffect[client]));    // Updates killstreak effect to temporary value, permanent value used in OnResupply
                     player.SetKillstreakEffectId(tEffect[client], slot);           // Update player killstreak effect to be used elsewhere.
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen killstreak effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_killstreak_effect", tMenuSelection[client], info);
 
                     tEffect[client] = 0;
                 }
 
                 if (tWeaponEffect[client] > 0)
                 {
+                    TF2Attrib_SetByDefIndex(wep, 134, float(tWeaponEffect[client]));    // Updates weapon unusual effect to temporary value, permanent value used in OnResupply
                     player.SetUnusualWeaponEffectId(tWeaponEffect[client], slot);
-                    tWeaponEffect[client] = 0;
 
-                    // TODO: Translations
-                    CPrintToChat(client, "You have chosen weapon unusual effect: {red}%s{default} on weapon slot {red}%s.", tMenuSelection[client], info);
+                    CPrintToChat(client, "%t", "wearables_weapon_unusual_effect", tMenuSelection[client], info);
+
+                    tWeaponEffect[client] = 0;
                 }
 
                 // Display the main wearables menu after player has selected killstreak option.
-                MenuCreate(client, wearablesMenu, "Wearables Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                MenuCreate(client, wearablesMenu, menuName);
             }
 
             // Killstreak Tiers, Sheens, Effects Handlers (We give players the effects selected here!)
@@ -1177,7 +1209,8 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if (StrEqual(info, killStreakTierMenuItems[i]))
                 {
                     menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                    MenuCreate(client, slotSelectMenu, "Apply to slot: ");
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_slot_select", LANG_SERVER);
+                    MenuCreate(client, slotSelectMenu, menuName);
                     tTier[client] = killStreakTierSel[i] + 1;    // Set our temporary variable to value of our selected killstreak tier.
                     break;
                 }
@@ -1191,7 +1224,8 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if (StrEqual(info, killStreakSheenMenuItems[i]))
                 {
                     menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                    MenuCreate(client, slotSelectMenu, "Apply to slot: ");
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_slot_select", LANG_SERVER);
+                    MenuCreate(client, slotSelectMenu, menuName);
                     tSheen[client] = killStreakSheenSel[i];    // Set our temporary variable to value of our selected killstreak sheen.
                     break;
                 }
@@ -1205,7 +1239,8 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if (StrEqual(info, killStreakEffectMenuItems[i]))
                 {
                     menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                    MenuCreate(client, slotSelectMenu, "Apply to slot: ");
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_slot_select", LANG_SERVER);
+                    MenuCreate(client, slotSelectMenu, menuName);
                     tEffect[client] = killStreakEffectSel[i];    // Set our temporary variable to value of our selected killstreak effect.
                     break;
                 }
@@ -1220,7 +1255,6 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 // REF: https://wiki.teamfortress.com/wiki/Item_schema
 
                 // Here we've got to think a little differently than the others, since we cannot append a attribute index to each individual taunt, we must use the string name of unusual taunt found in items_game.txt and attach the particle to the player manually.
-                // This also means for particles which require a refire timer (Showstopper for example) will need magic numbers in order to function properly. These will be defined at the top of the file for readability.
                 // Loop through unusual taunt menu item id list and match display name with item id.
                 // Check if unusualTauntMenu matches selected by player
                 tauntEffectList.GetString(i, tName, sizeof(tName));
@@ -1229,11 +1263,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     // Set unusualTauntMenuId to desired effect by matching index of display name with id.
                     player.SetUnusualTauntEffectId(tName);
 
-                    // TODO: Translations
                     tauntEffectNameList.GetString(i, tName, sizeof(tName));
-                    CPrintToChat(client, "You have chosen unusual taunt effect: {red}%s", tName);
+                    CPrintToChat(client, "%t", "wearables_taunt_effect", tName);
 
-                    MenuCreate(client, wearablesMenu, "Wearables Menu");
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                    MenuCreate(client, wearablesMenu, menuName);
                     break;
                 }
             }
@@ -1248,11 +1282,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                     // LogMessage("tName: %s", tName);
                     player.SetUnusualHatEffectId(StringToInt(tName));
 
-                    // TODO: Translations
                     unusualEffectNameList.GetString(i + 1, tName, sizeof(tName));
-                    CPrintToChat(client, "You have chosen unusual hat effect: {red}%s", tName);
+                    CPrintToChat(client, "%t", "wearables_hat_effect", tName);
 
-                    MenuCreate(client, wearablesMenu, "Wearables Menu");
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                    MenuCreate(client, wearablesMenu, menuName);
                     break;
                 }
             }
@@ -1263,7 +1297,8 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 if (StrEqual(info, unusualWeaponMenuItems[i]))
                 {
                     menu.GetItem(menuItem, info, sizeof(info), _, tMenuSelection[client], sizeof(tMenuSelection[client]));
-                    MenuCreate(client, slotSelectMenu, "Apply to slot: ");
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_slot_select", LANG_SERVER);
+                    MenuCreate(client, slotSelectMenu, menuName);
                     tWeaponEffect[client] = unusualWeaponSel[i];
                     break;
                 }
@@ -1273,40 +1308,60 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
         {
             if (menuItem == MenuCancel_ExitBack)
             {
-                if (StrEqual(tMenuSelection[client], "Killstreak Menu"))
-                    MenuCreate(client, wearablesMenu, "Wearables Menu");
-
-                if (StrEqual(tMenuSelection[client], "Unusual Taunts Menu"))
-                    MenuCreate(client, wearablesMenu, "Wearables Menu");
-
-                if (StrEqual(tMenuSelection[client], "Unusual Hats Menu"))
-                    MenuCreate(client, wearablesMenu, "Wearables Menu");
-
-                if (StrEqual(tMenuSelection[client], "Killstreak Tier")) {
-                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Menu");
-                    MenuCreate(client, killStreakMenu, "Killstreak Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_name", LANG_SERVER);
+                if (StrEqual(tMenuSelection[client], menuName)) {
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                    MenuCreate(client, wearablesMenu, menuName);
                 }
 
-                if (StrEqual(tMenuSelection[client], "Killstreak Sheen")) {
-                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Menu");
-                    MenuCreate(client, killStreakMenu, "Killstreak Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_unusual_taunts", LANG_SERVER);
+                if (StrEqual(tMenuSelection[client], menuName)) {
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                    MenuCreate(client, wearablesMenu, menuName);
                 }
 
-                if (StrEqual(tMenuSelection[client], "Killstreak Effect")) {
-                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Menu");
-                    MenuCreate(client, killStreakMenu, "Killstreak Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_unusual_hats", LANG_SERVER);
+                if (StrEqual(tMenuSelection[client], menuName)) {
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                    MenuCreate(client, wearablesMenu, menuName);
                 }
 
-                if (StrEqual(tMenuSelection[client], "Unusual Weapons Menu"))
-                    MenuCreate(client, wearablesMenu, "Wearables Menu");
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_tier_name", LANG_SERVER);
+                if (StrEqual(tMenuSelection[client], menuName)) {
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_name", LANG_SERVER);
+                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), menuName);
+                    MenuCreate(client, killStreakMenu, menuName);
+                }
+
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_sheen_name", LANG_SERVER);
+                if (StrEqual(tMenuSelection[client], menuName)) {
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_name", LANG_SERVER);
+                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), menuName);
+                    MenuCreate(client, killStreakMenu, menuName);
+                }
+
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_effect_name", LANG_SERVER);
+                if (StrEqual(tMenuSelection[client], menuName)) {
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_name", LANG_SERVER);
+                    strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), menuName);
+                    MenuCreate(client, killStreakMenu, menuName);
+                }
+
+                Format(menuName, sizeof(menuName), "%T", "wearables_menu_unusual_weapons", LANG_SERVER);
+                if (StrEqual(tMenuSelection[client], menuName)) {
+                    Format(menuName, sizeof(menuName), "%T", "wearables_menu_name", LANG_SERVER);
+                    MenuCreate(client, wearablesMenu, menuName);
+                }
 
                 for (int i = 0; i < sizeof(killStreakTierMenuItems); i++)
                 {
                     if (StrEqual(tMenuSelection[client], killStreakTierMenuItems[i]))
                     {
-                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Tier");
+                        Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_tier_name", LANG_SERVER);
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), menuName);
 
-                        MenuCreate(client, killStreakTierMenu, "Killstreak Tier Menu");
+                        Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_tier_name", LANG_SERVER);
+                        MenuCreate(client, killStreakTierMenu, menuName);
                         tTier[client] = 0;
                         break;
                     }
@@ -1316,9 +1371,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     if (StrEqual(tMenuSelection[client], killStreakSheenMenuItems[i]))
                     {
-                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Sheen");
+                        Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_sheen_name", LANG_SERVER);
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), menuName);
 
-                        MenuCreate(client, killStreakSheenMenu, "Killstreak Sheen Menu");
+                        Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_sheen_name", LANG_SERVER);
+                        MenuCreate(client, killStreakSheenMenu, menuName);
                         tSheen[client] = 0;
                         break;
                     }
@@ -1328,9 +1385,11 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     if (StrEqual(tMenuSelection[client], killStreakEffectMenuItems[i]))
                     {
-                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Killstreak Effect");
+                        Format(menuName, sizeof(menuName), "%T", "wearables_menu_item_killstreak_effect_name", LANG_SERVER);
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), menuName);
 
-                        MenuCreate(client, killStreakEffectMenu, "Killstreak Effect Menu");
+                        Format(menuName, sizeof(menuName), "%T", "wearables_menu_killstreak_effect_name", LANG_SERVER);
+                        MenuCreate(client, killStreakEffectMenu, menuName);
                         tEffect[client] = 0;
                         break;
                     }
@@ -1340,9 +1399,10 @@ public int Menu_Handler(Menu menu, MenuAction menuAction, int client, int menuIt
                 {
                     if (StrEqual(tMenuSelection[client], unusualWeaponMenuItems[i]))
                     {
-                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), "Unusual Weapons Menu");
+                        Format(menuName, sizeof(menuName), "%T", "wearables_menu_unusual_weapons", LANG_SERVER);
+                        strcopy(tMenuSelection[client], sizeof(tMenuSelection[client]), menuName);
 
-                        MenuCreate(client, unusualWeaponMenu, "Unusual Weapons Menu");
+                        MenuCreate(client, unusualWeaponMenu, menuName);
                         tWeaponEffect[client] = 0;
                         break;
                     }
