@@ -1,6 +1,6 @@
 # TF2-Wearables
 
-## Overview 
+## Overview
 
 This plugin allows players on the server to give themselves Team Fortress 2 wearable affects & cosmetics through the use abusing the attribute system. I originally made this plugin for my own private community to provide players with more incentive to play on the servers I provided. All the customizations are done mainly through a menu accessible with **!wearables**, I had gotten this idea from a plugin with a similar name which intended to have the same functionality but I felt personally it had missed the mark.
 
@@ -10,7 +10,7 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 - Unusual Taunts: Allows the player to choose a unusual effect for taunting in-game. (Also known as emoting)
 - Unusual Hat Effects: Allows the player to choose a unusual hat effect. (If they are wearing a hat in-game)
 - Unusual Weapon Effects: Allows the player to attach a unusual weapon effect to the desired slot. (Updates OnResupply, needs to moved to OnGiveNamedItem)
-- MySQL support (Saves players preferences if they disconnect!)
+- MySQL support (Saves players preferences if they disconnect)
 
 ## Commands
 
@@ -35,16 +35,11 @@ This plugin allows players on the server to give themselves Team Fortress 2 wear
 - TF2Attributes - https://github.com/FlaminSarge/tf2attributes
 - TF2Utils - https://github.com/nosoop/SM-TFUtils
 - TF Econ Data - https://github.com/nosoop/SM-TFEconData
-- stocksoup/textparse - https://github.com/nosoop/stocksoup
 
 ## Installation
 
 - Place plugin inside `sourcemod/plugins` folder.
 - Add `wearables` MySQL entry to your `databases.cfg` located inside `sourcemod/configs`
-
-## TODO
-
-- Add other wearable options (Festive, Australiums, etc)
 
 ## Credits
 
